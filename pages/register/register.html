@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create account</title>
+  <link rel="stylesheet" href="/shared/layout.css">
+  <link rel="stylesheet" href="register.css">
+  <script defer type="module" src="register.js"></script>
+</head>
+
+<body>
+  <div class="wrap">
+    <div class="buttonWrap">
+      <button class="button"><a href="../login/login.html" class="bck">&lt; Back</a></button>
+    </div>
+
+    <div class="cardAuth">
+      <div class="top">
+        <h1>skyline hub</h1>
+        <h2>welcome back!</h2>
+      </div>
+
+      <form id="registerForm">
+        <div class="mid">
+          <div class="input">
+            <label for="full_name">Name</label>
+            <input id="full_name" type="text" class="name" placeholder="john Doe" required>
+          </div>
+
+          <div class="input">
+            <label for="email">Email</label>
+            <input id="email" type="email" class="email" placeholder="you@example.com" required>
+          </div>
+
+          <div class="input">
+            <label for="password">Password</label>
+            <input id="password" type="password" class="password" placeholder="........." minlength="6" required>
+          </div>
+        </div>
+
+        <div class="down">
+          <div class="btnWrap">
+            <button class="btn1" type="submit">sign up</button>
+          </div>
+
+          <p class="error" id="msg" aria-live="polite"></p>
+
+          <div class="link">
+            <a href="../login/login.html" class="links">Already have an account? sign in</a>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</body>
+</html>

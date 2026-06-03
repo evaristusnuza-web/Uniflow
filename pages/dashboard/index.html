@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>UniFlow • Dashboard</title>
+  <link rel="stylesheet" href="../../shared/layout.css" />
+  <link rel="stylesheet" href="dashboard.css" />
+  <script type="module" src="dashboard.js"></script>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="logo">U</div>
+        <div>
+          <h1>UniFlow</h1>
+          <p>Learn. Progress. Succeed.</p>
+        </div>
+      </div>
+
+      <nav class="nav">
+        <a class="active" href="index.html">Home</a>
+        <a href="../courses/courses.html">My Courses</a>
+        <a href="../tasks/tasks.html">Tasks</a>
+        <a href="#assistant">AI Assistant</a>
+        <a class="admin" id="adminLink" href="../admin/admin.html">Admin</a>
+        <a id="logoutBtn" href="#">Log Out</a>
+      </nav>
+
+      <div class="promo">
+        <h3>Upgrade to Premium</h3>
+        <ul>
+          <li>Exclusive contents</li>
+          <li>Unlimited downloads</li>
+          <li>Advanced AI</li>
+        </ul>
+        <button type="button">Go Premium</button>
+      </div>
+
+      <footer>© 2026 UniFlow</footer>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div class="search">
+          <input placeholder="Search (courses, books, subjects, etc.)" />
+        </div>
+        <div class="user">
+          <div class="avatar" id="avatar">U</div>
+          <div>
+            <div class="name" id="username">Student</div>
+            <div class="meta" id="major">Major not set</div>
+          </div>
+        </div>
+      </header>
+
+      <section class="content">
+        <section class="hero card">
+          <h2 id="welcome">Welcome, Student</h2>
+          <p class="muted">Ready to reach your goals today?</p>
+        </section>
+
+        <section class="cards3">
+          <article class="card">
+            <h3>Global Progression</h3>
+            <div class="progress">
+              <div class="ring" id="ring" style="--p:0"><span id="ringText">0%</span></div>
+              <div class="muted">
+                Progress increases as you complete courses.
+                <div class="actions">
+                  <a class="btn" href="../courses/courses.html">Choose courses</a>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <article class="card">
+            <div class="row">
+              <h3>Tasks of the day</h3>
+              <span class="badge" id="tasksSummary">0 / 0</span>
+            </div>
+            <p class="muted" id="tasksSubtitle">Choose tasks to get started.</p>
+            <div class="actions">
+              <a class="btn" href="../tasks/tasks.html">View all</a>
+            </div>
+          </article>
+
+          <article class="card">
+            <h3>Current Level</h3>
+            <div class="level">
+              <div class="levelIcon">👤</div>
+              <div>
+                <div class="levelTitle" id="level">Level 0</div>
+                <div class="muted" id="levelSubtitle">(Major not set)</div>
+              </div>
+            </div>
+            <div class="actions">
+              <button class="btn ghost" type="button">View my path</button>
+            </div>
+          </article>
+        </section>
+
+        <section class="cards2">
+          <article class="card">
+            <div class="row">
+              <h3>Tasks of the day</h3>
+              <span class="badge">Today</span>
+            </div>
+            <div class="list" id="taskList"></div>
+          </article>
+
+          <article class="card">
+            <div class="row">
+              <h3>My Courses</h3>
+              <a class="btn ghost" href="../courses/courses.html">View all</a>
+            </div>
+            <div class="courses" id="courseGrid"></div>
+          </article>
+        </section>
+
+        <section class="cards2" id="assistant">
+          <article class="card">
+            <h3>Papers & Books</h3>
+            <div class="split">
+              <div>
+                <div class="row"><h3 class="tight">Papers</h3><span class="badge">Latest</span></div>
+                <div class="list" id="papersWrap"></div>
+              </div>
+              <div>
+                <div class="row"><h3 class="tight">Books</h3><span class="badge">Latest</span></div>
+                <div class="list" id="booksWrap"></div>
+              </div>
+            </div>
+          </article>
+
+          <article class="card">
+            <div class="row">
+              <h3>AI Assistant</h3>
+              <span class="badge">Beta</span>
+            </div>
+
+            <div class="assistant">
+              <div class="bot">AI</div>
+              <div class="chat">
+                <div class="chatLog" id="chatLog"></div>
+                <div class="quick">
+                  <button class="btn ghost" data-quick="Explain a concept in Algorithms.">Explain</button>
+                  <button class="btn ghost" data-quick="Help me review Databases in 10 minutes.">Review</button>
+                  <button class="btn ghost" data-quick="Summarize what I should study this week.">Summary</button>
+                </div>
+                <form class="chatForm" id="chatForm">
+                  <input id="chatInput" placeholder="Ask me a question..." />
+                  <button class="send" type="submit">Send</button>
+                </form>
+                <div class="muted" id="aiHint"></div>
+              </div>
+            </div>
+          </article>
+        </section>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

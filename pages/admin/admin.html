@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>UniFlow • Admin</title>
+  <link rel="stylesheet" href="../../shared/layout.css" />
+  <link rel="stylesheet" href="admin.css" />
+  <script type="module" src="admin.js"></script>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="logo">U</div>
+        <div>
+          <h1>UniFlow</h1>
+          <p>Admin panel</p>
+        </div>
+      </div>
+
+      <nav class="nav">
+        <a href="../dashboard/index.html">Home</a>
+        <a href="../courses/courses.html">My Courses</a>
+        <a href="../tasks/tasks.html">Tasks</a>
+        <a class="active admin" id="adminLink" href="admin.html">Admin</a>
+        <a id="logoutBtn" href="#">Log Out</a>
+      </nav>
+
+      <footer>© 2026 UniFlow</footer>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div class="search">
+          <input placeholder="Admin actions..." />
+        </div>
+        <div class="user">
+          <div class="avatar" id="avatar">U</div>
+          <div>
+            <div class="name" id="username">Admin</div>
+            <div class="meta" id="major">—</div>
+          </div>
+        </div>
+      </header>
+
+      <section class="content">
+        <section class="grid2">
+          <article class="card">
+            <h2>Create Course</h2>
+            <form id="courseForm" class="form">
+              <label class="field"><span>Slug</span><input name="slug" required /></label>
+              <label class="field"><span>Title</span><input name="title" required /></label>
+              <button class="btn primary" type="submit">Create</button>
+              <p class="muted out" id="courseOut"></p>
+            </form>
+          </article>
+
+          <article class="card">
+            <h2>Create Task</h2>
+            <form id="taskForm" class="form">
+              <label class="field"><span>Title</span><input name="title" required /></label>
+              <label class="field"><span>Course</span><select name="courseId" id="taskCourse"></select></label>
+              <label class="check"><input type="checkbox" name="isDefault" /> Default task</label>
+              <button class="btn primary" type="submit">Create</button>
+              <p class="muted out" id="taskOut"></p>
+            </form>
+          </article>
+
+          <article class="card">
+            <h2>Upload Paper (PDF)</h2>
+            <form id="paperForm" class="form">
+              <label class="field"><span>Title</span><input name="title" required /></label>
+              <label class="field"><span>Year</span><input name="year" type="number" /></label>
+              <label class="field"><span>Language</span><input name="language" placeholder="English" /></label>
+              <label class="field"><span>Course</span><select name="courseId" id="paperCourse"></select></label>
+              <label class="field"><span>File</span><input name="file" type="file" accept="application/pdf" required /></label>
+              <button class="btn primary" type="submit">Upload</button>
+              <p class="muted out" id="paperOut"></p>
+            </form>
+          </article>
+
+          <article class="card">
+            <h2>Add Book</h2>
+            <form id="bookForm" class="form">
+              <label class="field"><span>Title</span><input name="title" required /></label>
+              <label class="field"><span>Author</span><input name="author" /></label>
+              <label class="field"><span>Price (cents)</span><input name="priceCents" type="number" value="0" /></label>
+              <label class="field"><span>Currency</span><input name="currency" value="USD" /></label>
+              <label class="field"><span>Course</span><select name="courseId" id="bookCourse"></select></label>
+              <label class="field"><span>Cover URL (optional)</span><input name="coverUrl" /></label>
+              <button class="btn primary" type="submit">Create</button>
+              <p class="muted out" id="bookOut"></p>
+            </form>
+          </article>
+        </section>
+
+        <section class="card">
+          <div class="row">
+            <h2>Preview</h2>
+            <button class="btn" id="refreshBtn" type="button">Refresh</button>
+          </div>
+
+          <div class="grid2">
+            <div>
+              <h3>Papers</h3>
+              <div class="list" id="papersList"></div>
+            </div>
+            <div>
+              <h3>Books</h3>
+              <div class="list" id="booksList"></div>
+            </div>
+          </div>
+        </section>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

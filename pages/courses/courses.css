@@ -1,0 +1,9 @@
+.out{min-height:18px}
+.progressForm{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+.progressForm select,.progressForm input{
+  border:1px solid var(--line);
+  border-radius:14px;
+  padding:10px 12px;
+  outline:none;
+  background:#fff;
+}

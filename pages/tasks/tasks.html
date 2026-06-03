@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>UniFlow • Tasks</title>
+  <link rel="stylesheet" href="../../shared/layout.css" />
+  <link rel="stylesheet" href="tasks.css" />
+  <script type="module" src="tasks.js"></script>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="logo">U</div>
+        <div>
+          <h1>UniFlow</h1>
+          <p>Learn. Progress. Succeed.</p>
+        </div>
+      </div>
+
+      <nav class="nav">
+        <a href="../dashboard/index.html">Home</a>
+        <a href="../courses/courses.html">My Courses</a>
+        <a class="active" href="tasks.html">Tasks</a>
+        <a class="admin" id="adminLink" href="../admin/admin.html">Admin</a>
+        <a id="logoutBtn" href="#">Log Out</a>
+      </nav>
+
+      <footer>© 2026 UniFlow</footer>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div class="search">
+          <input placeholder="Search tasks..." />
+        </div>
+        <div class="user">
+          <div class="avatar" id="avatar">U</div>
+          <div>
+            <div class="name" id="username">Student</div>
+            <div class="meta" id="major">Major not set</div>
+          </div>
+        </div>
+      </header>
+
+      <section class="content">
+        <section class="card">
+          <div class="row">
+            <h2>My Tasks</h2>
+            <button class="btn primary" id="saveBtn">Save selection</button>
+          </div>
+          <p class="muted">Select tasks to appear on your dashboard.</p>
+          <div class="list" id="tasksList"></div>
+          <p class="muted out" id="out"></p>
+        </section>
+
+        <section class="card">
+          <h2>Mark Task Complete</h2>
+          <p class="muted">Toggle completion for a selected task.</p>
+
+          <div class="list" id="mineList"></div>
+          <p class="muted out" id="mineOut"></p>
+        </section>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

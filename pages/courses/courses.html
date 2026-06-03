@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>UniFlow • Courses</title>
+  <link rel="stylesheet" href="../../shared/layout.css" />
+  <link rel="stylesheet" href="courses.css" />
+  <script type="module" src="courses.js"></script>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="logo">U</div>
+        <div>
+          <h1>UniFlow</h1>
+          <p>Learn. Progress. Succeed.</p>
+        </div>
+      </div>
+
+      <nav class="nav">
+        <a href="../dashboard/index.html">Home</a>
+        <a class="active" href="courses.html">My Courses</a>
+        <a href="../tasks/tasks.html">Tasks</a>
+        <a class="admin" id="adminLink" href="../admin/admin.html">Admin</a>
+        <a id="logoutBtn" href="#">Log Out</a>
+      </nav>
+
+      <footer>© 2026 UniFlow</footer>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div class="search">
+          <input placeholder="Search courses..." />
+        </div>
+        <div class="user">
+          <div class="avatar" id="avatar">U</div>
+          <div>
+            <div class="name" id="username">Student</div>
+            <div class="meta" id="major">Major not set</div>
+          </div>
+        </div>
+      </header>
+
+      <section class="content">
+        <section class="card">
+          <div class="row">
+            <h2>My Courses</h2>
+            <button class="btn primary" id="saveBtn">Save selection</button>
+          </div>
+          <p class="muted">Select the courses you want on your dashboard.</p>
+          <div class="list" id="coursesList"></div>
+          <p class="muted out" id="out"></p>
+        </section>
+
+        <section class="card">
+          <h2>Update Progress</h2>
+          <p class="muted">Demo control: set progress % for a selected course.</p>
+
+          <form class="progressForm" id="progressForm">
+            <select id="progressCourse"></select>
+            <input id="progressPct" type="number" min="0" max="100" value="0" />
+            <button class="btn" type="submit">Update</button>
+          </form>
+
+          <p class="muted out" id="progressOut"></p>
+        </section>
+      </section>
+    </main>
+  </div>
+</body>
+</html>
