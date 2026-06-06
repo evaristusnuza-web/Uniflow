@@ -10,12 +10,26 @@ function goDashboard() {
 
 // If already logged in, go dashboard
 (async () => {
-  try { await api("/me"); goDashboard(); } catch {}
+  try { await api("/me"); goDashboard(); } catch { }
 })();
 
 document.querySelector("#forgotLink").addEventListener("click", (e) => {
   e.preventDefault();
   msg.textContent = "Forgot password flow not implemented yet.";
+});
+
+const passInput = document.querySelector("#password");
+const toggleBtn = document.querySelector(".toggle-pass");
+
+toggleBtn.addEventListener("click", () => {
+  const showing = passInput.type === "text";
+  passInput.type = showing ? "password" : "text";
+
+  toggleBtn.setAttribute("aria-pressed", String(!showing));
+  toggleBtn.setAttribute("aria-label", showing ? "Show password" : "Hide password");
+
+  // optional: change icon
+  toggleBtn.textContent = showing ? "👁" : "🙈";
 });
 
 form.addEventListener("submit", async (e) => {

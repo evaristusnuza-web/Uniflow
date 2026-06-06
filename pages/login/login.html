@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,7 +13,9 @@
 <body>
   <div class="wrap">
     <div class="buttonWrap">
-      <button class="button"><a href="../dashboard/index.html" class="bck">&lt; Back</a></button>
+      <button class="button">
+        <a href="../dashboard/index.html" class="bck">&lt; Back</a>
+      </button>
     </div>
 
     <div class="cardAuth">
@@ -29,16 +32,29 @@
           </div>
 
           <div class="input">
-            <label for="password" class="l1">Password</label>
-            <input id="password" type="password" class="password" placeholder="password" minlength="6" required>
-          </div>
+            <label for="pw" class="l1">Password</label>
 
+            <div class="password-field">
+              <input id="pw" type="password" class="password" placeholder="password" required />
+              <button id="pwToggle" type="button" class="toggle-pass" aria-label="Show password">👁</button>
+            </div>
+          </div>
+          <script>
+            const pw = document.getElementById("pw");
+            const btn = document.getElementById("pwToggle");
+
+            btn.addEventListener("click", () => {
+              pw.type = pw.type === "password" ? "text" : "password";
+              btn.textContent = pw.type === "password" ? "👁" : "🙈";
+              console.log("toggled to:", pw.type);
+            });
+          </script>
           <div class="mid2">
             <div class="check">
               <input type="checkbox" class="check1" id="remember">
               <label for="remember">Remember later</label>
             </div>
-            <a href="#" class="links" id="forgotLink">forgot password</a>
+            <a href="#" class="links" id="forgotLink">Forgot password</a>
           </div>
         </div>
 
@@ -57,4 +73,5 @@
     </div>
   </div>
 </body>
+
 </html>
