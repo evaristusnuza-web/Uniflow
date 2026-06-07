@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,6 +8,7 @@
   <link rel="stylesheet" href="../shared/layout.css">
   <link rel="stylesheet" href="register.css">
   <script defer type="module" src="register.js"></script>
+  <script type="module" src="register.js"></script>
 </head>
 
 <body>
@@ -33,7 +35,7 @@
             <input id="email" type="email" class="email" placeholder="you@example.com" required>
           </div>
 
-        <div class="input">
+          <div class="input">
             <label for="pw" class="l1">Password</label>
 
             <div class="password-field">
@@ -41,7 +43,20 @@
               <button id="pwToggle" type="button" class="toggle-pass" aria-label="Show password">👁</button>
             </div>
           </div>
-          <script>
+
+          <div class="down">
+            <div class="btnWrap">
+              <button class="btn1" type="submit">sign up</button>
+            </div>
+
+            <p class="error" id="msg" aria-live="polite"></p>
+
+            <div class="link">
+              <a href="../login/login.html" class="links">Already have an account? sign in</a>
+            </div>
+          </div>
+      </form>
+       <script>
             const pw = document.getElementById("pw");
             const btn = document.getElementById("pwToggle");
 
@@ -52,19 +67,8 @@
                 console.log("toggled to:", pw.type);
               });
           </script>
-        <div class="down">
-          <div class="btnWrap">
-            <button class="btn1" type="submit">sign up</button>
-          </div>
-
-          <p class="error" id="msg" aria-live="polite"></p>
-
-          <div class="link">
-            <a href="../login/login.html" class="links">Already have an account? sign in</a>
-          </div>
-        </div>
-      </form>
     </div>
   </div>
 </body>
+
 </html>
