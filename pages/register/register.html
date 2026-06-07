@@ -33,23 +33,24 @@
             <input id="email" type="email" class="email" placeholder="you@example.com" required>
           </div>
 
-          <div class="input">
-            <label for="password">Password</label>
+        <div class="input">
+            <label for="pw" class="l1">Password</label>
+
             <div class="password-field">
-              <input id="password" type="password" class="password" placeholder="........." minlength="6" required>
-              <button type="button" class="toggle-pass" id="pwToggle">👁</button>
+              <input id="pw" type="password" class="password" placeholder="password" required />
+              <button id="pwToggle" type="button" class="toggle-pass" aria-label="Show password">👁</button>
             </div>
           </div>
-        </div>
-  <script>
+          <script>
             const pw = document.getElementById("pw");
             const btn = document.getElementById("pwToggle");
 
-            btn.addEventListener("click", () => {
-              pw.type = pw.type === "password" ? "text" : "password";
-              btn.textContent = pw.type === "password" ? "👁" : "🙈";
-              console.log("toggled to:", pw.type);
-            });
+            btn.addEventListener("click"
+              , () => {
+                pw.type = pw.type === "password" ? "text" : "password";
+                btn.textContent = pw.type === "password" ? "👁" : "🙈";
+                console.log("toggled to:", pw.type);
+              });
           </script>
         <div class="down">
           <div class="btnWrap">
