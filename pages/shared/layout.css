@@ -198,7 +198,7 @@ background-color: azure;
 
 /* Primitives */
 .card {
-  background: linear-gradient(180deg, rgba(255, 255, 255, .08), rgba(255, 255, 255, .03));
+  background: linear-gradient(180deg, rgba(160, 150, 150, 0.08), rgba(206, 200, 200, 0.03));
   border: 1px solid var(--line);
   border-radius: var(--r);
   padding: 14px;
