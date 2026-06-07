@@ -210,12 +210,53 @@
   cursor:pointer;
 }
 
-/* Images in header/logo */
+.courses{ min-width: 0; }
+.course{ min-width: 0; }
+.cName{ min-width: 0; }
+
+.cName b{
+  display:block;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+
+
 .img{ max-width:40px; }
 
-/* Responsive */
+.assistant{ min-width: 0; }
+.chat{ min-width: 0; }
+
+.quick{
+  width: 100%;
+  min-width: 0;
+}
+.quick .btn{
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+
+.chatForm{
+  width: 100%;
+  min-width: 0;
+}
+.chatForm input{
+  min-width: 0;
+  width: 100%;
+}
+
+
+@media (max-width: 360px){
+  .chatForm{ flex-direction: column; }
+  .send{ width: 100%; }
+}
 @media (max-width:980px){
   .cards3{ grid-template-columns:1fr; }
   .cards2{ grid-template-columns:1fr; }
   .split{ grid-template-columns:1fr; }
+}
+@media (max-width: 520px){
+  .courses{ grid-template-columns: 1fr; }
 }
