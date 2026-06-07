@@ -34,14 +34,13 @@ body {
 }
 
 body {
-  body {
-    margin: 0;
-    color: var(--text);
-    background:
-      radial-gradient(1200px 600px at 15% 0%, rgba(79, 99, 255, .10), transparent 60%),
-      radial-gradient(900px 500px at 95% 20%, rgba(45, 212, 191, .08), transparent 55%),
-      ;
-  }
+  margin: 0;
+  color: var(--text);
+  background:
+    radial-gradient(1200px 600px at 15% 0%, rgba(79, 99, 255, .10), transparent 60%),
+    radial-gradient(900px 500px at 95% 20%, rgba(45, 212, 191, .08), transparent 55%),
+    ;
+  overflow-x: hidden;
 }
 
 a {
@@ -347,9 +346,7 @@ img {
 }
 
 html,
-body {
-  overflow-x: hidden;
-}
+body {}
 
 .main {
   min-width: 0;
