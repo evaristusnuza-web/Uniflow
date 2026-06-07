@@ -1,7 +1,7 @@
 :root {
-  --bg: #0b1220;
-  --card: rgba(255, 255, 255, .06);
-  --card2: rgba(15, 26, 46, .65);
+  --bg: #c2c4c9;
+  --card: rgba(249, 244, 244, 0.06);
+  --card2: rgba(44, 54, 73, 0.65);
   --text: #a2a2a3;
   --muted: #9ca3af;
   --line: rgba(255, 255, 255, 0.305);
@@ -24,7 +24,7 @@ body {
 body {
   margin: 0;
   background:
-    radial-gradient(1200px 600px at 20% 10%, rgba(134, 147, 242, 0.25), transparent 60%),
+    radial-gradient(1200px 600px at 20% 10%, rgba(137, 149, 235, 0.25), transparent 60%),
     radial-gradient(900px 500px at 90% 40%, rgba(219, 246, 242, 0.18), transparent 60%),
     var(--bg);
   color: var(--text);
