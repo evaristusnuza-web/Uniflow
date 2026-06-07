@@ -126,3 +126,23 @@
   color: #fca5a5;
   font-size: 13px;
 }
+.password-field{
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-field input{
+  width: 100%;
+  padding-right: 46px;
+}
+
+.toggle-pass{
+  position: absolute;
+  right: 10px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 6px;
+}
