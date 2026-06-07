@@ -34,14 +34,14 @@ body {
 }
 
 body {
- body{
-  margin:0;
-  color: var(--text);
-  background:
-    radial-gradient(1200px 600px at 15% 0%, rgba(79,99,255,.10), transparent 60%),
-    radial-gradient(900px 500px at 95% 20%, rgba(45,212,191,.08), transparent 55%),
-    var(--bg);
-}
+  body {
+    margin: 0;
+    color: var(--text);
+    background:
+      radial-gradient(1200px 600px at 15% 0%, rgba(79, 99, 255, .10), transparent 60%),
+      radial-gradient(900px 500px at 95% 20%, rgba(45, 212, 191, .08), transparent 55%),
+      var(--bg);
+  }
 }
 
 a {
@@ -346,6 +346,19 @@ img {
   cursor: pointer;
 }
 
+html,
+body {
+  overflow-x: hidden;
+}
+
+.main {
+  min-width: 0;
+}
+
+.content {
+  min-width: 0;
+}
+
 .overlay {
   position: fixed;
   inset: 0;
@@ -379,9 +392,21 @@ img {
     display: block;
   }
 
+
 }
-@media (max-width: 480px){
-  .topbar{ padding: 10px; }
-  .menuBtn{ width:40px; height:40px; }
-  .avatar{ width:40px; height:40px; }
+
+@media (max-width: 480px) {
+  .topbar {
+    padding: 10px;
+  }
+
+  .menuBtn {
+    width: 40px;
+    height: 40px;
+  }
+
+  .avatar {
+    width: 40px;
+    height: 40px;
+  }
 }
