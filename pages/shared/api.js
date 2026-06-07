@@ -1,25 +1,20 @@
 export const API_BASE = "https://uniflow-ofv0.onrender.com";
 const TOKEN_KEY = "uniflow_token";
 
-// ---------- Token helpers ----------
+// Token helpers
 export function setToken(token) {
   localStorage.setItem(TOKEN_KEY, token);
 }
+
 export function getToken() {
   return localStorage.getItem(TOKEN_KEY);
 }
+
 export function clearToken() {
   localStorage.removeItem(TOKEN_KEY);
 }
-import { me, clearToken } from "../shared/api.js";
 
-try {
-  await me();
-} catch {
-  clearToken();
-  window.location.replace("../login/login.html");
-}
-// ---------- Core API helper ----------
+// Core API helper
 export async function api(path, { method = "GET", body, headers = {} } = {}) {
   method = method.toUpperCase();
 
@@ -50,7 +45,7 @@ export async function api(path, { method = "GET", body, headers = {} } = {}) {
   return data;
 }
 
-// ---------- Convenience auth calls ----------
+// Auth helpers (store JWT)
 export async function login({ email, password }) {
   const { token, user } = await api("/auth/login", {
     method: "POST",
@@ -80,14 +75,14 @@ export function logout() {
   clearToken();
 }
 
-// ---------- UI helpers ----------
+// UI helpers
 export function escapeHTML(s) {
   return String(s).replace(/[&<>"']/g, (c) => ({
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    '"': "&quot;",
-    "'": "&#39;"
+    "&":"&amp;",
+    "<":"&lt;",
+    ">":"&gt;",
+    '"':"&quot;",
+    "'":"&#39;"
   }[c]));
 }
 
@@ -96,6 +91,6 @@ export function initials(name) {
     .split(" ")
     .filter(Boolean)
     .slice(0, 2)
-    .map(s => s[0].toUpperCase())
+    .map(x => x[0].toUpperCase())
     .join("");
 }

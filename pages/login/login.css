@@ -183,3 +183,8 @@
   color:#ef4444;
   font-size:13px;
 }
+@media (max-width: 420px){
+  .wrap{ padding:14px; }
+  .cardAuth{ padding:14px; }
+  .buttonWrap{ width:100%; }
+}

@@ -170,3 +170,8 @@
 }
 
 .toggle-pass:hover{ color: var(--text); }
+@media (max-width: 420px){
+  .wrap{ padding:14px; }
+  .cardAuth{ padding:14px; }
+  .buttonWrap{ width:100%; }
+}

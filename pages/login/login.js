@@ -5,16 +5,16 @@ document.addEventListener("DOMContentLoaded", () => {
   const pw = document.getElementById("pw");
   const btn = document.getElementById("pwToggle");
 
-  // if (pw && btn) {
-  //   btn.addEventListener("click", () => {
-  //     const show = pw.type === "password";
-  //     pw.type = show ? "text" : "password";
-  //     btn.textContent = show ? "🙈" : "👁";
-  //     btn.setAttribute("aria-label", show ? "Hide password" : "Show password");
-  //   });
-  // }
+ import { login } from "../shared/api.js";
 
-  // ----- Forgot password (placeholder) -----
+form.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const email = document.querySelector(".email").value.trim();
+  const password = document.querySelector(".password").value;
+
+  await login({ email, password }); // stores token
+  window.location.href = "../dashboard/index.html";
+});
   const forgot = document.getElementById("forgotLink");
   const msg = document.getElementById("msg");
   if (forgot && msg) {

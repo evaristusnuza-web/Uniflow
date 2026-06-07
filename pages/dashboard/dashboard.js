@@ -1,5 +1,6 @@
 import { me } from "../shared/api.js";
-
+import { setupMobileMenu } from "../shared/menu.js";
+setupMobileMenu();
 async function init() {
   try {
     const { user } = await me();

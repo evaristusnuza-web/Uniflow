@@ -6,6 +6,16 @@ const form = document.querySelector("#registerForm");
 const msg = document.querySelector("#msg");
 const btn = document.querySelector(".btn1");
 
+import { login } from "../shared/api.js";
+
+form.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const email = document.querySelector(".email").value.trim();
+  const password = document.querySelector(".password").value;
+
+  await login({ email, password }); // stores token
+  window.location.href = "../dashboard/index.html";
+});
 form.addEventListener("submit", async (e) => {
   e.preventDefault(); // prevents page reload
   msg.textContent = "";
