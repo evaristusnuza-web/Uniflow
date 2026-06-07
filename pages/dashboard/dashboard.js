@@ -1,18 +1,7 @@
-import { me } from "../shared/api.js";
+import { api, escapeHTML, initials, API_BASE, logout, me } from "../shared/api.js";
 import { setupMobileMenu } from "../shared/menu.js";
-setupMobileMenu();
-async function init() {
-  try {
-    const { user } = await me();
-    // call your existing render/load function and pass user
-    await loadDashboard(user);
-  } catch {
-    window.location.replace("../login/login.html");
-  }
-}
 
-init();
-import { api, escapeHTML, initials, API_BASE, logout } from "../shared/api.js";
+setupMobileMenu();
 
 function setRing(pct) {
   const ring = document.querySelector("#ring");
@@ -36,25 +25,21 @@ function addMsg(role, text) {
   log.scrollTop = log.scrollHeight;
 }
 
-async function requireLogin() {
-  try {
-    return await api("/me");
-  } catch {
-    window.location.href = "../login/login.html";
-    throw new Error("Not logged in");
-  }
-}
-
 async function safeGet(path, fallback) {
-  try {
-    return await api(path);
-  } catch {
-    return fallback;
-  }
+  try { return await api(path); }
+  catch { return fallback; }
 }
 
 async function load() {
-  const { user } = await requireLogin();
+  // ---- Auth guard ----
+  let user;
+  try {
+    const res = await me();
+    user = res.user;
+  } catch {
+    window.location.replace("../login/login.html");
+    return;
+  }
 
   // header + welcome
   document.querySelector("#username").textContent = user.username;
@@ -114,10 +99,10 @@ async function load() {
   if (tasksSubtitle) tasksSubtitle.textContent = taskMine.totalCount ? "Your tasks are ready." : "Choose tasks to get started.";
 
   const fallbackTasks = [
-    { id:"f1", title:"Welcome Guide: Explore the Platform", courseTitle:"Algorithms", completed:false, fallback:true },
-    { id:"f2", title:"Set up your profile and preferences", courseTitle:"Algorithms", completed:false, fallback:true },
-    { id:"f3", title:"Explore and add your first course", courseTitle:"Databases", completed:false, fallback:true },
-    { id:"f4", title:"Getting Started", courseTitle:"Databases", completed:false, fallback:true }
+    { id: "f1", title: "Welcome Guide: Explore the Platform", courseTitle: "Algorithms", completed: false, fallback: true },
+    { id: "f2", title: "Set up your profile and preferences", courseTitle: "Algorithms", completed: false, fallback: true },
+    { id: "f3", title: "Explore and add your first course", courseTitle: "Databases", completed: false, fallback: true },
+    { id: "f4", title: "Getting Started", courseTitle: "Databases", completed: false, fallback: true }
   ];
   const showTasks = taskMine.tasks?.length ? taskMine.tasks : fallbackTasks;
 
@@ -128,7 +113,7 @@ async function load() {
       const el = document.createElement("div");
       el.className = "item";
       el.innerHTML = `
-        <input type="checkbox" ${t.completed ? "checked":""} ${t.fallback ? "disabled":""}/>
+        <input type="checkbox" ${t.completed ? "checked" : ""} ${t.fallback ? "disabled" : ""}/>
         <div>
           <b>${escapeHTML(t.title)}</b>
           <small>Cours : ${escapeHTML(t.courseTitle || "—")}</small>
@@ -146,44 +131,13 @@ async function load() {
   const papersWrap = document.querySelector("#papersWrap");
   if (papersWrap) {
     papersWrap.innerHTML = "";
-    if (!papersRes.papers.length) {
-      papersWrap.innerHTML = `<div class="muted">No papers uploaded yet.</div>`;
-    } else {
-      papersRes.papers.slice(0, 4).forEach(p => {
-        const el = document.createElement("div");
-        el.className = "item";
-        el.innerHTML = `
-          <div>
-            <b>${escapeHTML(p.title)}</b>
-            <small>${escapeHTML(p.course?.title || "—")} • ${p.year || "?"} • ${escapeHTML(p.language || "—")}</small>
-          </div>
-          ${p.fileUrl ? `<a class="badge" target="_blank" href="${API_BASE}${p.fileUrl}">⬇</a>` : `<span class="badge">—</span>`}
-        `;
-        papersWrap.appendChild(el);
-      });
-    }
+    if (!papersRes.papers.length) papersWrap.innerHTML = `<div class="muted">No papers uploaded yet.</div>`;
   }
 
   const booksWrap = document.querySelector("#booksWrap");
   if (booksWrap) {
     booksWrap.innerHTML = "";
-    if (!booksRes.books.length) {
-      booksWrap.innerHTML = `<div class="muted">No books listed yet.</div>`;
-    } else {
-      booksRes.books.slice(0, 4).forEach(b => {
-        const price = `${(b.priceCents/100).toFixed(2)} ${b.currency}`;
-        const el = document.createElement("div");
-        el.className = "item";
-        el.innerHTML = `
-          <div>
-            <b>${escapeHTML(b.title)}</b>
-            <small>${escapeHTML(b.author || "—")} • ${escapeHTML(b.course?.title || "—")}</small>
-          </div>
-          <span class="badge">${escapeHTML(price)}</span>
-        `;
-        booksWrap.appendChild(el);
-      });
-    }
+    if (!booksRes.books.length) booksWrap.innerHTML = `<div class="muted">No books listed yet.</div>`;
   }
 
   // ---- Logout (JWT = client-side) ----
@@ -196,75 +150,8 @@ async function load() {
     });
   }
 
-  // ---- AI assistant (fallback if endpoint not implemented yet) ----
+  // ---- AI assistant (fallback) ----
   addMsg("assistant", `Hello ${user.username}! How can I help you today?`);
-
-  document.querySelectorAll("[data-quick]").forEach(btn => {
-    btn.addEventListener("click", async () => {
-      const prompt = btn.getAttribute("data-quick");
-      addMsg("user", prompt);
-
-      try {
-        const { reply } = await api("/ai/chat", { method:"POST", body: { message: prompt } });
-        addMsg("assistant", reply);
-      } catch {
-        addMsg("assistant", "AI endpoint not available yet on the server.");
-      }
-    });
-  });
-
-  const chatForm = document.querySelector("#chatForm");
-  if (chatForm) {
-    chatForm.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const input = document.querySelector("#chatInput");
-      const text = input.value.trim();
-      if (!text) return;
-      input.value = "";
-
-      addMsg("user", text);
-      try {
-        const { reply } = await api("/ai/chat", { method:"POST", body: { message: text } });
-        addMsg("assistant", reply);
-      } catch {
-        addMsg("assistant", "AI endpoint not available yet on the server.");
-      }
-    });
-  }
-}
-function setupMobileMenu() {
-  const btn = document.getElementById("menuBtn");
-  const overlay = document.getElementById("overlay");
-  if (!btn || !overlay) return;
-
-  const open = () => {
-    document.body.classList.add("menu-open");
-    overlay.hidden = false;
-    btn.setAttribute("aria-expanded", "true");
-  };
-
-  const close = () => {
-    document.body.classList.remove("menu-open");
-    overlay.hidden = true;
-    btn.setAttribute("aria-expanded", "false");
-  };
-
-  btn.addEventListener("click", () => {
-    document.body.classList.contains("menu-open") ? close() : open();
-  });
-
-  overlay.addEventListener("click", close);
-
-  // Close menu when clicking a nav link
-  document.querySelectorAll(".nav a").forEach(a => {
-    a.addEventListener("click", close);
-  });
-
-  // Close on ESC
-  window.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") close();
-  });
 }
 
-setupMobileMenu();
 load();
