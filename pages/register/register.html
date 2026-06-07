@@ -38,7 +38,16 @@
             <input id="password" type="password" class="password" placeholder="........." minlength="6" required>
           </div>
         </div>
+  <script>
+            const pw = document.getElementById("pw");
+            const btn = document.getElementById("pwToggle");
 
+            btn.addEventListener("click", () => {
+              pw.type = pw.type === "password" ? "text" : "password";
+              btn.textContent = pw.type === "password" ? "👁" : "🙈";
+              console.log("toggled to:", pw.type);
+            });
+          </script>
         <div class="down">
           <div class="btnWrap">
             <button class="btn1" type="submit">sign up</button>
