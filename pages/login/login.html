@@ -30,7 +30,6 @@
             <label for="email" class="l1">Email</label>
             <input id="email" type="email" class="email" placeholder="you@example.com" required>
           </div>
-
           <div class="input">
             <label for="pw" class="l1">Password</label>
 
@@ -43,11 +42,12 @@
             const pw = document.getElementById("pw");
             const btn = document.getElementById("pwToggle");
 
-            btn.addEventListener("click", () => {
-              pw.type = pw.type === "password" ? "text" : "password";
-              btn.textContent = pw.type === "password" ? "👁" : "🙈";
-              console.log("toggled to:", pw.type);
-            });
+            btn.addEventListener("click"
+              , () => {
+                pw.type = pw.type === "password" ? "text" : "password";
+                btn.textContent = pw.type === "password" ? "👁" : "🙈";
+                console.log("toggled to:", pw.type);
+              });
           </script>
           <div class="mid2">
             <div class="check">

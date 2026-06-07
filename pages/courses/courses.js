@@ -1,5 +1,12 @@
 import { api, initials, escapeHTML } from "../../shared/api.js";
+import { me, clearToken } from "../shared/api.js";
 
+try {
+  await me();
+} catch {
+  clearToken();
+  window.location.replace("../login/login.html");
+}
 async function requireLogin() {
   try { return await api("/me"); }
   catch { window.location.href = "../login/login.html"; throw new Error("Not logged in"); }
@@ -77,5 +84,39 @@ async function load() {
     await refreshProgressSelector();
   });
 }
+function setupMobileMenu() {
+  const btn = document.getElementById("menuBtn");
+  const overlay = document.getElementById("overlay");
+  if (!btn || !overlay) return;
 
+  const open = () => {
+    document.body.classList.add("menu-open");
+    overlay.hidden = false;
+    btn.setAttribute("aria-expanded", "true");
+  };
+
+  const close = () => {
+    document.body.classList.remove("menu-open");
+    overlay.hidden = true;
+    btn.setAttribute("aria-expanded", "false");
+  };
+
+  btn.addEventListener("click", () => {
+    document.body.classList.contains("menu-open") ? close() : open();
+  });
+
+  overlay.addEventListener("click", close);
+
+  // Close menu when clicking a nav link
+  document.querySelectorAll(".nav a").forEach(a => {
+    a.addEventListener("click", close);
+  });
+
+  // Close on ESC
+  window.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") close();
+  });
+}
+
+setupMobileMenu();
 load();

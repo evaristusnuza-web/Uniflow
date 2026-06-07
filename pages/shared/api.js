@@ -11,7 +11,14 @@ export function getToken() {
 export function clearToken() {
   localStorage.removeItem(TOKEN_KEY);
 }
+import { me, clearToken } from "../shared/api.js";
 
+try {
+  await me();
+} catch {
+  clearToken();
+  window.location.replace("../login/login.html");
+}
 // ---------- Core API helper ----------
 export async function api(path, { method = "GET", body, headers = {} } = {}) {
   method = method.toUpperCase();
