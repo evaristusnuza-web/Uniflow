@@ -176,6 +176,31 @@
   cursor:not-allowed;
   box-shadow:none;
 }
+/* Make layout: top back button + centered card */
+.wrap{
+  min-height: 100vh;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  align-items: start;
+  padding: 16px;
+  gap: 14px;
+}
+
+/* back button stays at the top */
+.buttonWrap{
+  width: 100%;
+  max-width: 520px;
+  justify-self: center;
+}
+
+/* card stays centered in the remaining space */
+.cardAuth{
+  justify-self: center;
+  align-self: center;
+  width: 100%;
+  max-width: 520px;
+}
+
 
 .error{
   margin:0;
@@ -187,4 +212,9 @@
   .wrap{ padding:14px; }
   .cardAuth{ padding:14px; }
   .buttonWrap{ width:100%; }
+}
+/* Extra phone polish */
+@media (max-width: 480px){
+  .wrap{ padding: 12px; }
+  .cardAuth{ padding: 14px; }
 }

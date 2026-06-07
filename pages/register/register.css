@@ -168,10 +168,37 @@
   padding:6px;
   color:var(--muted);
 }
+.wrap{
+  min-height: 100vh;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  align-items: start;
+  padding: 16px;
+  gap: 14px;
+}
+
+.buttonWrap{
+  width: 100%;
+  max-width: 520px;
+  justify-self: center;
+}
+
+.cardAuth{
+  justify-self: center;
+  align-self: center;
+  width: 100%;
+  max-width: 520px;
+}
+
+
 
 .toggle-pass:hover{ color: var(--text); }
 @media (max-width: 420px){
   .wrap{ padding:14px; }
   .cardAuth{ padding:14px; }
   .buttonWrap{ width:100%; }
+}
+@media (max-width: 480px){
+  .wrap{ padding: 12px; }
+  .cardAuth{ padding: 14px; }
 }
