@@ -1,58 +1,56 @@
 import { login } from "../shared/api.js";
 
 document.addEventListener("DOMContentLoaded", () => {
-  // ----- Password toggle -----
+  const form = document.querySelector("#loginForm");
+  const msg = document.querySelector("#msg");
+  const btn = document.querySelector(".but");
+
+  // Password toggle (matches your HTML: #pw and #pwToggle)
   const pw = document.getElementById("pw");
-  const btn = document.getElementById("pwToggle");
+  const toggle = document.getElementById("pwToggle");
+  if (pw && toggle) {
+    toggle.addEventListener("click", () => {
+      const show = pw.type === "password";
+      pw.type = show ? "text" : "password";
+      toggle.textContent = show ? "🙈" : "👁";
+      toggle.setAttribute("aria-label", show ? "Hide password" : "Show password");
+    });
+  }
 
- import { login } from "../shared/api.js";
-
-form.addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const email = document.querySelector(".email").value.trim();
-  const password = document.querySelector(".password").value;
-
-  await login({ email, password }); // stores token
-  window.location.href = "../dashboard/index.html";
-});
+  // Forgot password placeholder
   const forgot = document.getElementById("forgotLink");
-  const msg = document.getElementById("msg");
   if (forgot && msg) {
     forgot.addEventListener("click", (e) => {
       e.preventDefault();
-      msg.textContent = "Forgot password is not implemented yet.";
+      msg.textContent = "Forgot password not implemented yet.";
     });
   }
 
-  // ----- Login submit -----
-  const form = document.getElementById("loginForm");
-  const btnSubmit = document.querySelector(".but");
+  if (!form || !msg || !btn) return;
 
-  if (form && msg) {
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      msg.textContent = "";
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    msg.textContent = "";
 
-      const email = document.querySelector(".email").value.trim();
-      const password = document.querySelector(".password").value;
+    const email = document.querySelector(".email").value.trim();
+    const password = document.querySelector(".password").value;
 
-      if (!email || !password) {
-        msg.textContent = "Please enter email and password.";
-        return;
-      }
+    if (!email || !password) {
+      msg.textContent = "Please enter email and password.";
+      return;
+    }
 
-      btnSubmit.disabled = true;
-      btnSubmit.textContent = "signing in...";
+    btn.disabled = true;
+    btn.textContent = "signing in...";
 
-      try {
-        await login({ email, password });
-        window.location.href = "../dashboard/index.html";
-      } catch (err) {
-        msg.textContent = err.message;
-      } finally {
-        btnSubmit.disabled = false;
-        btnSubmit.textContent = "sign in";
-      }
-    });
-  }
+    try {
+      await login({ email, password }); // stores token in localStorage
+      window.location.href = "../dashboard/index.html";
+    } catch (err) {
+      msg.textContent = err.message || "Login failed";
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "sign in";
+    }
+  });
 });
