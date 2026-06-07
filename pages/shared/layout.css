@@ -1,6 +1,6 @@
 :root {
   /* Base */
-  --bg: #8b9cce;
+  --bg: #a7b7e7;
   --card: #ffffff;
   --text: #111827;
   --muted: #6b7280;
@@ -37,8 +37,8 @@ body {
   margin: 0;
   color: var(--text);
   background:
-    radial-gradient(1200px 600px at 15% 0%, rgba(79, 99, 255, .10), transparent 60%),
-    radial-gradient(900px 500px at 95% 20%, rgba(45, 212, 191, .08), transparent 55%),
+    radial-gradient(1200px 600px at 15% 0%, rgba(162, 170, 226, 0.1), transparent 60%),
+    radial-gradient(900px 500px at 95% 20%, rgba(84, 155, 146, 0.08), transparent 55%),
     var(--bg);
   overflow-x: hidden;
 }
