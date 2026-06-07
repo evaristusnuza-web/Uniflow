@@ -8,14 +8,8 @@ function goDashboard() {
   window.location.href = "../dashboard/index.html";
 }
 
-// If already logged in, go dashboard
-(async () => {
-  try {
-    // optional: you can keep this, but only works if token already exists
-    // await me();
-    goDashboard();
-  } catch {}
-})();
+import { isLoggedIn } from "../shared/api.js";
+if (isLoggedIn()) window.location.href = "../dashboard/index.html";
 
 form.addEventListener("submit", async (e) => {
   e.preventDefault();

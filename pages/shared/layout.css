@@ -76,9 +76,7 @@ img {
   border-radius: 14px;
   display: grid;
   place-items: center;
-  background: linear-gradient(135deg, var(--brand), #2dd4bf);
-  color: #fff;
-  font-weight: 900;
+
 }
 
 .brand h1 {
