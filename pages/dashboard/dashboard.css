@@ -28,7 +28,7 @@
   border-radius: 999px;
   display: grid;
   place-items: center;
-  background: conic-gradient(var(--brand) calc(var(--p)*1%), #e8eaf1 0);
+  background: conic-gradient(var(--brand) calc(var(--p)*1%), #73757d 0);
   position: relative;
 }
 
