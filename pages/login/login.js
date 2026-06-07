@@ -5,14 +5,14 @@ document.addEventListener("DOMContentLoaded", () => {
   const pw = document.getElementById("pw");
   const btn = document.getElementById("pwToggle");
 
-  if (pw && btn) {
-    btn.addEventListener("click", () => {
-      const show = pw.type === "password";
-      pw.type = show ? "text" : "password";
-      btn.textContent = show ? "🙈" : "👁";
-      btn.setAttribute("aria-label", show ? "Hide password" : "Show password");
-    });
-  }
+  // if (pw && btn) {
+  //   btn.addEventListener("click", () => {
+  //     const show = pw.type === "password";
+  //     pw.type = show ? "text" : "password";
+  //     btn.textContent = show ? "🙈" : "👁";
+  //     btn.setAttribute("aria-label", show ? "Hide password" : "Show password");
+  //   });
+  // }
 
   // ----- Forgot password (placeholder) -----
   const forgot = document.getElementById("forgotLink");
