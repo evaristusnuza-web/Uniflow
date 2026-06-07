@@ -1,59 +1,58 @@
-import { api } from "../shared/api.js";
+import { login } from "../shared/api.js";
 
-const form = document.querySelector("#loginForm");
-const msg = document.querySelector("#msg");
-const btn = document.querySelector(".but");
+document.addEventListener("DOMContentLoaded", () => {
+  // ----- Password toggle -----
+  const pw = document.getElementById("pw");
+  const btn = document.getElementById("pwToggle");
 
-function goDashboard() {
-  window.location.href = "../dashboard/index.html";
-}
-
-// If already logged in, go dashboard
-(async () => {
-  try { await api("/me"); goDashboard(); } catch { }
-})();
-
-document.querySelector("#forgotLink").addEventListener("click", (e) => {
-  e.preventDefault();
-  msg.textContent = "Forgot password flow not implemented yet.";
-});
-
-const passInput = document.querySelector("#password");
-const toggleBtn = document.querySelector(".toggle-pass");
-
-toggleBtn.addEventListener("click", () => {
-  const showing = passInput.type === "text";
-  passInput.type = showing ? "password" : "text";
-
-  toggleBtn.setAttribute("aria-pressed", String(!showing));
-  toggleBtn.setAttribute("aria-label", showing ? "Show password" : "Hide password");
-
-  // optional: change icon
-  toggleBtn.textContent = showing ? "👁" : "🙈";
-});
-
-form.addEventListener("submit", async (e) => {
-  e.preventDefault();
-  msg.textContent = "";
-
-  const email = document.querySelector(".email").value.trim();
-  const password = document.querySelector(".password").value;
-
-  if (!email || !password) {
-    msg.textContent = "Please enter email and password.";
-    return;
+  if (pw && btn) {
+    btn.addEventListener("click", () => {
+      const show = pw.type === "password";
+      pw.type = show ? "text" : "password";
+      btn.textContent = show ? "🙈" : "👁";
+      btn.setAttribute("aria-label", show ? "Hide password" : "Show password");
+    });
   }
 
-  btn.disabled = true;
-  btn.textContent = "signing in...";
+  // ----- Forgot password (placeholder) -----
+  const forgot = document.getElementById("forgotLink");
+  const msg = document.getElementById("msg");
+  if (forgot && msg) {
+    forgot.addEventListener("click", (e) => {
+      e.preventDefault();
+      msg.textContent = "Forgot password is not implemented yet.";
+    });
+  }
 
-  try {
-    await api("/auth/login", { method: "POST", body: { email, password } });
-    goDashboard();
-  } catch (err) {
-    msg.textContent = err.message;
-  } finally {
-    btn.disabled = false;
-    btn.textContent = "sign in";
+  // ----- Login submit -----
+  const form = document.getElementById("loginForm");
+  const btnSubmit = document.querySelector(".but");
+
+  if (form && msg) {
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      msg.textContent = "";
+
+      const email = document.querySelector(".email").value.trim();
+      const password = document.querySelector(".password").value;
+
+      if (!email || !password) {
+        msg.textContent = "Please enter email and password.";
+        return;
+      }
+
+      btnSubmit.disabled = true;
+      btnSubmit.textContent = "signing in...";
+
+      try {
+        await login({ email, password });
+        window.location.href = "../dashboard/index.html";
+      } catch (err) {
+        msg.textContent = err.message;
+      } finally {
+        btnSubmit.disabled = false;
+        btnSubmit.textContent = "sign in";
+      }
+    });
   }
 });

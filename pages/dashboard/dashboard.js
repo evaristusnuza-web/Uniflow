@@ -1,9 +1,9 @@
-import { api, escapeHTML, initials, API_BASE } from "../../shared/api.js";
-window.location.href = "../login/login.html";
+import { api, escapeHTML, initials, API_BASE, logout } from "../shared/api.js";
 
 function setRing(pct) {
   const ring = document.querySelector("#ring");
   const ringText = document.querySelector("#ringText");
+  if (!ring || !ringText) return;
   ring.style.setProperty("--p", String(pct));
   ringText.textContent = `${pct}%`;
 }
@@ -14,6 +14,7 @@ function levelFromProgress(pct) {
 
 function addMsg(role, text) {
   const log = document.querySelector("#chatLog");
+  if (!log) return;
   const div = document.createElement("div");
   div.className = `msg ${role}`;
   div.textContent = text;
@@ -30,6 +31,14 @@ async function requireLogin() {
   }
 }
 
+async function safeGet(path, fallback) {
+  try {
+    return await api(path);
+  } catch {
+    return fallback;
+  }
+}
+
 async function load() {
   const { user } = await requireLogin();
 
@@ -40,18 +49,19 @@ async function load() {
   document.querySelector("#welcome").textContent = `Welcome, ${user.username} 👋`;
 
   // admin link
-  if (user.role === "ADMIN") document.querySelector("#adminLink").style.display = "block";
+  const adminLink = document.querySelector("#adminLink");
+  if (adminLink) adminLink.style.display = (user.role === "ADMIN") ? "block" : "none";
 
-  // courses + global progress
-  let mine = { courses: [], globalProgress: 0 };
-  try { mine = await api("/courses/mine"); } catch {}
-
+  // ---- Courses (fallback if endpoint not implemented yet) ----
+  const mine = await safeGet("/courses/mine", { courses: [], globalProgress: 0 });
   const global = mine.globalProgress || 0;
-  setRing(global);
-  document.querySelector("#level").textContent = `Level ${levelFromProgress(global)}`;
-  document.querySelector("#levelSubtitle").textContent = user.major ? user.major : "(Major not set)";
 
-  // courses card
+  setRing(global);
+  const levelEl = document.querySelector("#level");
+  const levelSubEl = document.querySelector("#levelSubtitle");
+  if (levelEl) levelEl.textContent = `Level ${levelFromProgress(global)}`;
+  if (levelSubEl) levelSubEl.textContent = user.major ? user.major : "(Major not set)";
+
   const fallbackCourses = [
     { title: "Algorithms", progressPct: 0, icon: "</>" },
     { title: "Databases", progressPct: 0, icon: "⛁" },
@@ -63,28 +73,31 @@ async function load() {
     .map((c, i) => ({ ...c, icon: c.icon || fallbackCourses[i]?.icon || "▦" }));
 
   const grid = document.querySelector("#courseGrid");
-  grid.innerHTML = "";
-  for (const c of showCourses) {
-    const pct = c.progressPct ?? 0;
-    const el = document.createElement("div");
-    el.className = "course";
-    el.innerHTML = `
-      <div class="cIcon">${c.icon}</div>
-      <div class="cName">
-        <b>${escapeHTML(c.title)}</b>
-        <div class="bar"><i style="width:${pct}%"></i></div>
-      </div>
-      <div class="pct">${pct}%</div>
-    `;
-    grid.appendChild(el);
+  if (grid) {
+    grid.innerHTML = "";
+    for (const c of showCourses) {
+      const pct = c.progressPct ?? 0;
+      const el = document.createElement("div");
+      el.className = "course";
+      el.innerHTML = `
+        <div class="cIcon">${c.icon}</div>
+        <div class="cName">
+          <b>${escapeHTML(c.title)}</b>
+          <div class="bar"><i style="width:${pct}%"></i></div>
+        </div>
+        <div class="pct">${pct}%</div>
+      `;
+      grid.appendChild(el);
+    }
   }
 
-  // tasks
-  let taskMine = { tasks: [], doneCount: 0, totalCount: 0 };
-  try { taskMine = await api("/tasks/mine"); } catch {}
+  // ---- Tasks (fallback if endpoint not implemented yet) ----
+  const taskMine = await safeGet("/tasks/mine", { tasks: [], doneCount: 0, totalCount: 0 });
 
-  document.querySelector("#tasksSummary").textContent = `${taskMine.doneCount || 0} / ${taskMine.totalCount || 0}`;
-  document.querySelector("#tasksSubtitle").textContent = taskMine.totalCount ? "Your tasks are ready." : "Choose tasks to get started.";
+  const tasksSummary = document.querySelector("#tasksSummary");
+  const tasksSubtitle = document.querySelector("#tasksSubtitle");
+  if (tasksSummary) tasksSummary.textContent = `${taskMine.doneCount || 0} / ${taskMine.totalCount || 0}`;
+  if (tasksSubtitle) tasksSubtitle.textContent = taskMine.totalCount ? "Your tasks are ready." : "Choose tasks to get started.";
 
   const fallbackTasks = [
     { id:"f1", title:"Welcome Guide: Explore the Platform", courseTitle:"Algorithms", completed:false, fallback:true },
@@ -95,108 +108,115 @@ async function load() {
   const showTasks = taskMine.tasks?.length ? taskMine.tasks : fallbackTasks;
 
   const taskList = document.querySelector("#taskList");
-  taskList.innerHTML = "";
-
-  for (const t of showTasks) {
-    const el = document.createElement("div");
-    el.className = "item";
-    el.innerHTML = `
-      <input type="checkbox" ${t.completed ? "checked":""} ${t.fallback ? "disabled":""}/>
-      <div>
-        <b>${escapeHTML(t.title)}</b>
-        <small>Cours : ${escapeHTML(t.courseTitle || "—")}</small>
-      </div>
-      <span class="badge">${t.fallback ? "New" : (t.completed ? "Done" : "Task")}</span>
-    `;
-
-    if (!t.fallback) {
-      el.querySelector("input").addEventListener("change", async (e) => {
-        await api("/tasks/complete", { method:"POST", body: { taskId: t.id, completed: e.target.checked } });
-        const updated = await api("/tasks/mine");
-        document.querySelector("#tasksSummary").textContent = `${updated.doneCount} / ${updated.totalCount}`;
-      });
-    }
-    taskList.appendChild(el);
-  }
-
-  // papers + books
-  const [papersRes, booksRes] = await Promise.all([api("/papers"), api("/books")]);
-
-  const papersWrap = document.querySelector("#papersWrap");
-  papersWrap.innerHTML = "";
-  if (!papersRes.papers.length) {
-    papersWrap.innerHTML = `<div class="muted">No papers uploaded yet.</div>`;
-  } else {
-    papersRes.papers.slice(0, 4).forEach(p => {
+  if (taskList) {
+    taskList.innerHTML = "";
+    for (const t of showTasks) {
       const el = document.createElement("div");
       el.className = "item";
       el.innerHTML = `
+        <input type="checkbox" ${t.completed ? "checked":""} ${t.fallback ? "disabled":""}/>
         <div>
-          <b>${escapeHTML(p.title)}</b>
-          <small>${escapeHTML(p.course?.title || "—")} • ${p.year || "?"} • ${escapeHTML(p.language || "—")}</small>
+          <b>${escapeHTML(t.title)}</b>
+          <small>Cours : ${escapeHTML(t.courseTitle || "—")}</small>
         </div>
-        ${p.fileUrl ? `<a class="badge" target="_blank" href="${API_BASE}${p.fileUrl}">⬇</a>` : `<span class="badge">—</span>`}
+        <span class="badge">${t.fallback ? "New" : (t.completed ? "Done" : "Task")}</span>
       `;
-      papersWrap.appendChild(el);
-    });
+      taskList.appendChild(el);
+    }
+  }
+
+  // ---- Papers + Books (fallback if endpoints not implemented yet) ----
+  const papersRes = await safeGet("/papers", { papers: [] });
+  const booksRes  = await safeGet("/books", { books: [] });
+
+  const papersWrap = document.querySelector("#papersWrap");
+  if (papersWrap) {
+    papersWrap.innerHTML = "";
+    if (!papersRes.papers.length) {
+      papersWrap.innerHTML = `<div class="muted">No papers uploaded yet.</div>`;
+    } else {
+      papersRes.papers.slice(0, 4).forEach(p => {
+        const el = document.createElement("div");
+        el.className = "item";
+        el.innerHTML = `
+          <div>
+            <b>${escapeHTML(p.title)}</b>
+            <small>${escapeHTML(p.course?.title || "—")} • ${p.year || "?"} • ${escapeHTML(p.language || "—")}</small>
+          </div>
+          ${p.fileUrl ? `<a class="badge" target="_blank" href="${API_BASE}${p.fileUrl}">⬇</a>` : `<span class="badge">—</span>`}
+        `;
+        papersWrap.appendChild(el);
+      });
+    }
   }
 
   const booksWrap = document.querySelector("#booksWrap");
-  booksWrap.innerHTML = "";
-  if (!booksRes.books.length) {
-    booksWrap.innerHTML = `<div class="muted">No books listed yet.</div>`;
-  } else {
-    booksRes.books.slice(0, 4).forEach(b => {
-      const price = `${(b.priceCents/100).toFixed(2)} ${b.currency}`;
-      const el = document.createElement("div");
-      el.className = "item";
-      el.innerHTML = `
-        <div>
-          <b>${escapeHTML(b.title)}</b>
-          <small>${escapeHTML(b.author || "—")} • ${escapeHTML(b.course?.title || "—")}</small>
-        </div>
-        <span class="badge">${escapeHTML(price)}</span>
-      `;
-      booksWrap.appendChild(el);
+  if (booksWrap) {
+    booksWrap.innerHTML = "";
+    if (!booksRes.books.length) {
+      booksWrap.innerHTML = `<div class="muted">No books listed yet.</div>`;
+    } else {
+      booksRes.books.slice(0, 4).forEach(b => {
+        const price = `${(b.priceCents/100).toFixed(2)} ${b.currency}`;
+        const el = document.createElement("div");
+        el.className = "item";
+        el.innerHTML = `
+          <div>
+            <b>${escapeHTML(b.title)}</b>
+            <small>${escapeHTML(b.author || "—")} • ${escapeHTML(b.course?.title || "—")}</small>
+          </div>
+          <span class="badge">${escapeHTML(price)}</span>
+        `;
+        booksWrap.appendChild(el);
+      });
+    }
+  }
+
+  // ---- Logout (JWT = client-side) ----
+  const logoutBtn = document.querySelector("#logoutBtn");
+  if (logoutBtn) {
+    logoutBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      logout();
+      window.location.href = "../login/login.html";
     });
   }
 
-  // logout
-  document.querySelector("#logoutBtn").addEventListener("click", async (e) => {
-    e.preventDefault();
-    await api("/auth/logout", { method:"POST" });
-    window.location.href = "../login/login.html";
-  });
-
-  // AI
+  // ---- AI assistant (fallback if endpoint not implemented yet) ----
   addMsg("assistant", `Hello ${user.username}! How can I help you today?`);
 
   document.querySelectorAll("[data-quick]").forEach(btn => {
     btn.addEventListener("click", async () => {
       const prompt = btn.getAttribute("data-quick");
       addMsg("user", prompt);
-      const { reply } = await api("/ai/chat", { method:"POST", body: { message: prompt } });
-      addMsg("assistant", reply);
+
+      try {
+        const { reply } = await api("/ai/chat", { method:"POST", body: { message: prompt } });
+        addMsg("assistant", reply);
+      } catch {
+        addMsg("assistant", "AI endpoint not available yet on the server.");
+      }
     });
   });
 
-  document.querySelector("#chatForm").addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const input = document.querySelector("#chatInput");
-    const msg = input.value.trim();
-    if (!msg) return;
-    input.value = "";
+  const chatForm = document.querySelector("#chatForm");
+  if (chatForm) {
+    chatForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const input = document.querySelector("#chatInput");
+      const text = input.value.trim();
+      if (!text) return;
+      input.value = "";
 
-    addMsg("user", msg);
-    try {
-      const { reply } = await api("/ai/chat", { method:"POST", body: { message: msg } });
-      addMsg("assistant", reply);
-      document.querySelector("#aiHint").textContent = "";
-    } catch (err) {
-      addMsg("assistant", `Error: ${err.message}`);
-      document.querySelector("#aiHint").textContent = "If AI fails: set OPENAI_API_KEY on the server.";
-    }
-  });
+      addMsg("user", text);
+      try {
+        const { reply } = await api("/ai/chat", { method:"POST", body: { message: text } });
+        addMsg("assistant", reply);
+      } catch {
+        addMsg("assistant", "AI endpoint not available yet on the server.");
+      }
+    });
+  }
 }
 
 load();

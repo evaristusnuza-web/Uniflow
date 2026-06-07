@@ -1,70 +1,86 @@
-// export const API_BASE = "http://localhost:3000"; // change in production
+export const API_BASE = "https://uniflow-ofv0.onrender.com";
+const TOKEN_KEY = "uniflow_token";
 
-export const API_BASE = "https://YOUR-RENDER-URL.onrender.com";
-const TOKEN_KEY = "academy_token";
-
-export const setToken = (t) => localStorage.setItem(TOKEN_KEY, t);
-export const getToken = () => localStorage.getItem(TOKEN_KEY);
-export const clearToken = () => localStorage.removeItem(TOKEN_KEY);
-
-export async function api(path, { method="GET", body } = {}) {
-  const headers = {};
-  const token = getToken();
-  if (token) headers.Authorization = `Bearer ${token}`;
-  if (body !== undefined) headers["Content-Type"] = "application/json";
-
-  const res = await fetch(API_BASE + path, {
-    method,
-    headers,
-    body: body !== undefined ? JSON.stringify(body) : undefined
-  });
-
-  const data = await res.json().catch(()=> ({}));
-  if (!res.ok) throw new Error(data.message || "Request failed");
-  return data;
+// ---------- Token helpers ----------
+export function setToken(token) {
+  localStorage.setItem(TOKEN_KEY, token);
 }
-let csrfToken = null;
-
-export async function ensureCsrf() {
-  if (csrfToken) return csrfToken;
-  const res = await fetch(`${API_BASE}/security/csrf`, { credentials: "include" });
-  const data = await res.json();
-  csrfToken = data.csrfToken;
-  return csrfToken;
+export function getToken() {
+  return localStorage.getItem(TOKEN_KEY);
+}
+export function clearToken() {
+  localStorage.removeItem(TOKEN_KEY);
 }
 
+// ---------- Core API helper ----------
 export async function api(path, { method = "GET", body, headers = {} } = {}) {
   method = method.toUpperCase();
 
-  const isFormData = body instanceof FormData;
   const finalHeaders = { ...headers };
+  const token = getToken();
+  if (token) finalHeaders.Authorization = `Bearer ${token}`;
 
+  const isFormData = body instanceof FormData;
   if (!isFormData && body !== undefined) {
     finalHeaders["Content-Type"] = "application/json";
-  }
-
-  if (!["GET", "HEAD", "OPTIONS"].includes(method)) {
-    finalHeaders["x-csrf-token"] = await ensureCsrf();
   }
 
   const res = await fetch(`${API_BASE}${path}`, {
     method,
     headers: finalHeaders,
-    body: isFormData ? body : (body !== undefined ? JSON.stringify(body) : undefined),
-    credentials: "include"
+    body: isFormData ? body : (body !== undefined ? JSON.stringify(body) : undefined)
   });
 
   const text = await res.text();
   let data = {};
   try { data = text ? JSON.parse(text) : {}; } catch { data = { raw: text }; }
 
-  if (!res.ok) throw new Error(data.message || data.error || text || "Request failed");
+  if (!res.ok) {
+    const msg = data.message || data.error || text || `Request failed (${res.status})`;
+    throw new Error(Array.isArray(msg) ? msg.join(", ") : msg);
+  }
+
   return data;
 }
 
+// ---------- Convenience auth calls ----------
+export async function login({ email, password }) {
+  const { token, user } = await api("/auth/login", {
+    method: "POST",
+    body: { email, password }
+  });
+  setToken(token);
+  return { token, user };
+}
+
+export async function register({ email, username, password, major }) {
+  const payload = { email, username, password };
+  if (major) payload.major = major;
+
+  const { token, user } = await api("/auth/register", {
+    method: "POST",
+    body: payload
+  });
+  setToken(token);
+  return { token, user };
+}
+
+export async function me() {
+  return await api("/me");
+}
+
+export function logout() {
+  clearToken();
+}
+
+// ---------- UI helpers ----------
 export function escapeHTML(s) {
-  return String(s).replace(/[&<>"']/g, c => ({
-    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+  return String(s).replace(/[&<>"']/g, (c) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;"
   }[c]));
 }
 
@@ -73,6 +89,6 @@ export function initials(name) {
     .split(" ")
     .filter(Boolean)
     .slice(0, 2)
-    .map(x => x[0].toUpperCase())
+    .map(s => s[0].toUpperCase())
     .join("");
 }

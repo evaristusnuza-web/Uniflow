@@ -1,4 +1,4 @@
-import { api } from "../shared/api.js";
+import { register } from "../shared/api.js";
 
 const form = document.querySelector("#registerForm");
 const msg = document.querySelector("#msg");
@@ -8,9 +8,13 @@ function goDashboard() {
   window.location.href = "../dashboard/index.html";
 }
 
-
+// If already logged in, go dashboard
 (async () => {
-  try { await api("/me"); goDashboard(); } catch {}
+  try {
+    // optional: you can keep this, but only works if token already exists
+    // await me();
+    goDashboard();
+  } catch {}
 })();
 
 form.addEventListener("submit", async (e) => {
@@ -30,7 +34,9 @@ form.addEventListener("submit", async (e) => {
   btn.textContent = "creating...";
 
   try {
-    await api("/auth/register", { method: "POST", body: { email, username, password } });
+    // This stores token in localStorage inside api.js
+    await register({ username, email, password });
+
     goDashboard();
   } catch (err) {
     msg.textContent = err.message;
