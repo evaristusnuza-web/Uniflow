@@ -1,3 +1,4 @@
+import os
 import sqlite3
 from pathlib import Path
 
@@ -7,7 +8,8 @@ from pathlib import Path
 # ============================================================
 
 BASE_DIR = Path(__file__).resolve().parent
-DB_PATH = BASE_DIR / "accounting.db"
+DB_PATH = Path(os.environ.get("ACCOUNTING_DB_PATH", BASE_DIR / "accounting.db"))
+DB_PATH.parent.mkdir(parents=True, exist_ok=True)
 
 connection = sqlite3.connect(DB_PATH)
 connection.execute("PRAGMA foreign_keys = ON")
@@ -322,7 +324,6 @@ def migrate_database():
         ),
     ]
 
-    changed = False
     for table_name, column_name, column_definition, backfill_sql in migrations:
         cursor.execute(f"PRAGMA table_info({table_name})")
         columns = {column[1] for column in cursor.fetchall()}
@@ -335,7 +336,6 @@ def migrate_database():
         )
         if backfill_sql:
             cursor.execute(backfill_sql)
-        changed = True
 
     # Older versions recorded payment methods only in journal account lines.
     # Recover them where possible, while preserving any value already saved.
@@ -370,7 +370,6 @@ def migrate_database():
           )
         """
     )
-    changed = changed or cursor.rowcount > 0
 
     cursor.execute(
         """
@@ -403,10 +402,8 @@ def migrate_database():
           )
         """
     )
-    changed = changed or cursor.rowcount > 0
 
-    if changed:
-        connection.commit()
+    connection.commit()
 
 
 # ============================================================
