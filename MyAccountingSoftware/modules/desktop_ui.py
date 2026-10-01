@@ -1,7 +1,8 @@
-"""Sage-inspired desktop ERP workspace for My Accounting Software."""
+"""Sage-inspired desktop ERP workspace for KoraLedger."""
 
 import csv
 from datetime import date
+from pathlib import Path
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 
@@ -97,8 +98,22 @@ class AccountingDesktop:
         self.status_var = tk.StringVar(value="Ready")
         self.company_var = tk.StringVar(value=self.company)
         self.search_var = tk.StringVar()
+        self.app_icon = None
+        self.brand_icon = None
+        icon_path = Path(__file__).resolve().parents[1] / "assets" / "koraledger_icon.png"
+        if icon_path.is_file():
+            try:
+                self.app_icon = tk.PhotoImage(file=str(icon_path))
+                self.root.iconphoto(True, self.app_icon)
+                self.brand_icon = self.app_icon.subsample(
+                    max(1, (self.app_icon.width() + 31) // 32),
+                    max(1, (self.app_icon.height() + 31) // 32),
+                )
+            except tk.TclError:
+                self.app_icon = None
+                self.brand_icon = None
 
-        self.root.title("LedgerWorks · Accounting and Distribution")
+        self.root.title("KoraLedger · Accounting and Distribution")
         self.root.geometry("1460x920")
         self.root.minsize(1100, 700)
         self.root.configure(bg=C["canvas"])
@@ -142,11 +157,15 @@ class AccountingDesktop:
 
         brand = tk.Frame(header, bg=C["navy"], padx=22)
         brand.pack(side="left", fill="y")
-        mark = tk.Label(brand, text="L", bg=C["teal"], fg=C["white"], font=("Segoe UI", 17, "bold"), width=2, height=1)
-        mark.pack(side="left", pady=15)
+        if self.brand_icon:
+            mark = tk.Label(brand, image=self.brand_icon, bg=C["navy"], bd=0)
+            mark.pack(side="left", pady=17)
+        else:
+            mark = tk.Label(brand, text="K", bg=C["teal"], fg=C["white"], font=("Segoe UI", 17, "bold"), width=2, height=1)
+            mark.pack(side="left", pady=15)
         brand_copy = tk.Frame(brand, bg=C["navy"])
         brand_copy.pack(side="left", padx=11)
-        tk.Label(brand_copy, text="LEDGERWORKS", bg=C["navy"], fg=C["white"], font=("Segoe UI", 11, "bold")).pack(anchor="w", pady=(14, 0))
+        tk.Label(brand_copy, text="KORALEDGER", bg=C["navy"], fg=C["white"], font=("Segoe UI", 11, "bold")).pack(anchor="w", pady=(14, 0))
         tk.Label(brand_copy, text="ACCOUNTING & DISTRIBUTION", bg=C["navy"], fg="#a9bbc3", font=("Segoe UI", 7, "bold")).pack(anchor="w", pady=(1, 0))
 
         right = tk.Frame(header, bg=C["navy"], padx=22)
@@ -219,7 +238,7 @@ class AccountingDesktop:
         divider = tk.Frame(contents, bg="#345260", height=1)
         divider.pack(fill="x", padx=18, pady=(20, 12))
         tk.Label(contents, text="Local, auditable, double-entry accounting", bg=C["sidebar"], fg="#9db2bc", font=("Segoe UI", 8), wraplength=205, justify="left").pack(anchor="w", padx=20)
-        tk.Button(self.sidebar, text="About LedgerWorks", bg=C["sidebar"], fg="#d4e0e4", activebackground=C["sidebar_hover"], activeforeground=C["white"], relief="flat", anchor="w", padx=18, pady=12, command=self._show_about).pack(side="bottom", fill="x", padx=10, pady=8)
+        tk.Button(self.sidebar, text="About KoraLedger", bg=C["sidebar"], fg="#d4e0e4", activebackground=C["sidebar_hover"], activeforeground=C["white"], relief="flat", anchor="w", padx=18, pady=12, command=self._show_about).pack(side="bottom", fill="x", padx=10, pady=8)
 
     def _nav_hover(self, widget, page, active):
         if page == self.active_page:
@@ -248,8 +267,8 @@ class AccountingDesktop:
 
     def _show_about(self):
         messagebox.showinfo(
-            "About LedgerWorks",
-            "LedgerWorks Accounting & Distribution\n\n"
+            "About KoraLedger",
+            "KoraLedger Accounting & Distribution\n\n"
             "A local business accounting workspace with customer and supplier subledgers, inventory, sales and purchasing, cash receipts, general ledger, and financial reports.\n\n"
             "Posted transactions create balanced journal entries. Keep regular backups of the company database.",
             parent=self.root,

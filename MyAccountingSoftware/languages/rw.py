@@ -1,5 +1,5 @@
 TRANSLATIONS = {
-"app_title": "POROGARAMU YACU Y'UBUCURUZI",
+"app_title": "KORALEDGER",
 
 "customers": "Abakiriya",
 "suppliers": "Abatanga ibicuruzwa",

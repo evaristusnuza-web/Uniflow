@@ -1,5 +1,5 @@
 TRANSLATIONS = {
-"app_title": "MON LOGICIEL DE COMPTABILITÉ",
+"app_title": "KORALEDGER",
 
 "customers": "Clients",
 "suppliers": "Fournisseurs",
