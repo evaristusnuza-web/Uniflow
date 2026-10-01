@@ -1,56 +1,50 @@
 import { login } from "../shared/api.js";
 
-document.addEventListener("DOMContentLoaded", () => {
-  const form = document.querySelector("#loginForm");
-  const msg = document.querySelector("#msg");
-  const btn = document.querySelector(".but");
+const form = document.querySelector("#loginForm");
+const message = document.querySelector("#msg");
+const submitButton = form?.querySelector('button[type="submit"]');
+const password = document.querySelector("#pw");
+const toggle = document.querySelector("#pwToggle");
 
-  // Password toggle (matches your HTML: #pw and #pwToggle)
-  const pw = document.getElementById("pw");
-  const toggle = document.getElementById("pwToggle");
-  if (pw && toggle) {
-    toggle.addEventListener("click", () => {
-      const show = pw.type === "password";
-      pw.type = show ? "text" : "password";
-      toggle.textContent = show ? "🙈" : "👁";
-      toggle.setAttribute("aria-label", show ? "Hide password" : "Show password");
-    });
-  }
-
-  // Forgot password placeholder
-  const forgot = document.getElementById("forgotLink");
-  if (forgot && msg) {
-    forgot.addEventListener("click", (e) => {
-      e.preventDefault();
-      msg.textContent = "Forgot password not implemented yet.";
-    });
-  }
-
-  if (!form || !msg || !btn) return;
-
-  form.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    msg.textContent = "";
-
-    const email = document.querySelector(".email").value.trim();
-    const password = document.querySelector(".password").value;
-
-    if (!email || !password) {
-      msg.textContent = "Please enter email and password.";
-      return;
-    }
-
-    btn.disabled = true;
-    btn.textContent = "signing in...";
-
-    try {
-      await login({ email, password }); // stores token in localStorage
-      window.location.href = "../dashboard/index.html";
-    } catch (err) {
-      msg.textContent = err.message || "Login failed";
-    } finally {
-      btn.disabled = false;
-      btn.textContent = "sign in";
-    }
+if (toggle && password) {
+  toggle.addEventListener("click", () => {
+    const showing = password.type === "password";
+    password.type = showing ? "text" : "password";
+    toggle.textContent = showing ? "Hide" : "Show";
+    toggle.setAttribute("aria-label", showing ? "Hide password" : "Show password");
+    toggle.setAttribute("aria-pressed", String(showing));
   });
+}
+
+document.querySelector("#forgotLink")?.addEventListener("click", () => {
+  if (message) message.textContent = "Password reset email is not configured yet. Please contact your UniFlow administrator.";
+});
+
+form?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  if (!message || !submitButton) return;
+  message.textContent = "";
+
+  const email = document.querySelector("#email")?.value.trim();
+  const passwordValue = password?.value || "";
+  if (!email || !passwordValue) {
+    message.textContent = "Enter your email and password to continue.";
+    return;
+  }
+
+  submitButton.disabled = true;
+  submitButton.textContent = "Signing in…";
+  try {
+    await login({
+      email,
+      password: passwordValue,
+      remember: document.querySelector("#remember")?.checked ?? true,
+    });
+    window.location.replace("../dashboard/index.html");
+  } catch (error) {
+    message.textContent = error.message || "Sign-in failed. Please try again.";
+  } finally {
+    submitButton.disabled = false;
+    submitButton.textContent = "Sign in";
+  }
 });

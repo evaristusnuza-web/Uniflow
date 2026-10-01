@@ -1,1 +1,12 @@
-.out{min-height:18px}
+.out { min-height: 18px; }
+
+.pick { align-items: center; cursor: pointer; transition: border-color .15s ease, background .15s ease; }
+.pick:hover { border-color: rgba(79, 99, 255, .42); background: #fbfcff; }
+.pick > div { flex: 1; min-width: 0; }
+.pick b { display: block; }
+.pick small { display: block; margin-top: 4px; }
+
+@media (max-width: 600px) {
+  .row { align-items: flex-start; flex-direction: column; }
+  .row > button { width: 100%; }
+}

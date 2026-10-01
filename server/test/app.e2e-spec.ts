@@ -1,29 +1,28 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication } from '@nestjs/common';
-import request from 'supertest';
-import { App } from 'supertest/types';
-import { AppModule } from './../src/app.module';
+import { Test, TestingModule } from "@nestjs/testing";
+import { INestApplication } from "@nestjs/common";
+import request from "supertest";
+import { App } from "supertest/types";
+import { AppController } from "../src/app.controller";
 
-describe('AppController (e2e)', () => {
+describe("UniFlow API health (e2e)", () => {
   let app: INestApplication<App>;
 
-  beforeEach(async () => {
+  beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [AppModule],
+      controllers: [AppController],
     }).compile();
-
     app = moduleFixture.createNestApplication();
     await app.init();
   });
 
-  it('/ (GET)', () => {
+  it("returns a health response", () => {
     return request(app.getHttpServer())
-      .get('/')
+      .get("/health")
       .expect(200)
-      .expect('Hello World!');
+      .expect({ ok: true });
   });
 
-  afterEach(async () => {
+  afterAll(async () => {
     await app.close();
   });
 });

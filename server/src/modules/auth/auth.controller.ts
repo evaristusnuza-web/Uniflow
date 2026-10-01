@@ -1,32 +1,39 @@
 import { Body, Controller, Post } from "@nestjs/common";
-import { AuthService } from "./auth.service";
 import { z } from "zod";
+import { parseRequest } from "../../common/validation";
+import { AuthService } from "./auth.service";
 
-const RegisterDto = z.object({
-  email: z.string().email(),
-  username: z.string().min(2),
-  major: z.string().optional(),
-  password: z.string().min(6)
+const registerSchema = z.object({
+  email: z.string().trim().toLowerCase().email().max(254),
+  username: z.string().trim().min(2).max(60),
+  major: z.string().trim().max(100).optional(),
+  password: z.string().min(8).max(128),
 });
 
-const LoginDto = z.object({
-  email: z.string().email(),
-  password: z.string().min(6)
+const loginSchema = z.object({
+  email: z.string().trim().toLowerCase().email().max(254),
+  password: z.string().min(1).max(128),
 });
 
 @Controller("auth")
 export class AuthController {
-  constructor(private auth: AuthService) {}
+  constructor(private readonly auth: AuthService) {}
 
   @Post("register")
-  async register(@Body() body: any) {
-    const dto = RegisterDto.parse(body);
-    return await this.auth.register(dto.email, dto.username, dto.password, dto.major);
+  register(@Body() body: unknown) {
+    const dto = parseRequest(registerSchema, body);
+    return this.auth.register(dto.email, dto.username, dto.password, dto.major);
   }
 
   @Post("login")
-  async login(@Body() body: any) {
-    const dto = LoginDto.parse(body);
-    return await this.auth.login(dto.email, dto.password);
+  login(@Body() body: unknown) {
+    const dto = parseRequest(loginSchema, body);
+    return this.auth.login(dto.email, dto.password);
+  }
+
+  @Post("logout")
+  logout() {
+    // Access tokens are stateless; the client invalidates its local copy.
+    return { ok: true };
   }
 }

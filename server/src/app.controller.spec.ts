@@ -1,22 +1,21 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
+import { Test, TestingModule } from "@nestjs/testing";
+import { AppController } from "./app.controller";
 
-describe('AppController', () => {
-  let appController: AppController;
+describe("AppController", () => {
+  let controller: AppController;
 
   beforeEach(async () => {
-    const app: TestingModule = await Test.createTestingModule({
+    const module: TestingModule = await Test.createTestingModule({
       controllers: [AppController],
-      providers: [AppService],
     }).compile();
-
-    appController = app.get<AppController>(AppController);
+    controller = module.get<AppController>(AppController);
   });
 
-  describe('root', () => {
-    it('should return "Hello World!"', () => {
-      expect(appController.getHello()).toBe('Hello World!');
-    });
+  it("reports API health", () => {
+    expect(controller.health()).toEqual({ ok: true });
+  });
+
+  it("identifies the API", () => {
+    expect(controller.root()).toEqual({ name: "UniFlow API", ok: true });
   });
 });

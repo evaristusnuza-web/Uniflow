@@ -1,131 +1,161 @@
-import { api, initials, escapeHTML } from "../../shared/api.js";
-import { me, clearToken } from "../shared/api.js";
+import { api, initials, logout, me } from "../shared/api.js";
+import { setupMobileMenu } from "../shared/menu.js";
 
-try {
-  await me();
-} catch {
-  clearToken();
-  window.location.replace("../login/login.html");
-}
-async function requireLogin() {
-  try { return await api("/me"); }
-  catch { window.location.href = "../login/login.html"; throw new Error("Not logged in"); }
+setupMobileMenu();
+const byId = (id) => document.getElementById(id);
+let availableTasks = [];
+
+function showError(message = "") {
+  const element = byId("pageError");
+  if (!element) return;
+  element.textContent = message;
+  element.hidden = !message;
 }
 
 function setHeader(user) {
-  document.querySelector("#username").textContent = user.username;
-  document.querySelector("#major").textContent = user.major || "Major not set";
-  document.querySelector("#avatar").textContent = initials(user.username);
-  if (user.role === "ADMIN") document.querySelector("#adminLink").style.display = "block";
+  byId("username").textContent = user.username;
+  byId("major").textContent = user.major || "Major not set";
+  byId("avatar").textContent = initials(user.username);
+  const adminLink = byId("adminLink");
+  if (adminLink) adminLink.style.display = user.role === "ADMIN" ? "block" : "none";
+}
+
+function renderChoices(tasks, selectedIds) {
+  const list = byId("tasksList");
+  list.replaceChildren();
+  if (!tasks.length) {
+    const empty = document.createElement("p");
+    empty.className = "muted empty-state";
+    empty.textContent = "No tasks are available yet. An administrator can add tasks to the catalog.";
+    list.append(empty);
+    return;
+  }
+  for (const task of tasks) {
+    const label = document.createElement("label");
+    label.className = "item pick";
+    label.dataset.search = `${task.title} ${task.course?.title || ""} ${task.description || ""}`.toLowerCase();
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.value = task.id;
+    checkbox.checked = selectedIds.has(task.id);
+    checkbox.setAttribute("aria-label", `Select ${task.title}`);
+    const copy = document.createElement("div");
+    const title = document.createElement("b");
+    title.textContent = task.title;
+    const description = document.createElement("small");
+    description.className = "muted";
+    description.textContent = task.course?.title || task.description || "General study task";
+    copy.append(title, description);
+    const badge = document.createElement("span");
+    badge.className = "badge";
+    badge.textContent = task.isDefault ? "Suggested" : "Task";
+    label.append(checkbox, copy, badge);
+    list.append(label);
+  }
+}
+
+function renderMine(summary) {
+  const list = byId("mineList");
+  list.replaceChildren();
+  const tasks = summary.tasks || [];
+  const doneCount = Number(summary.doneCount) || 0;
+  byId("taskCount").textContent = `${doneCount} / ${tasks.length} complete`;
+
+  if (!tasks.length) {
+    const empty = document.createElement("p");
+    empty.className = "muted empty-state";
+    empty.textContent = "No tasks selected. Choose tasks above to create your checklist.";
+    list.append(empty);
+    return;
+  }
+
+  for (const task of tasks) {
+    const label = document.createElement("label");
+    label.className = "item mine-task";
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.checked = Boolean(task.completed);
+    checkbox.setAttribute("aria-label", `Mark ${task.title} ${task.completed ? "incomplete" : "complete"}`);
+    const copy = document.createElement("span");
+    copy.className = "task-copy";
+    const title = document.createElement("b");
+    title.textContent = task.title;
+    const course = document.createElement("small");
+    course.textContent = task.courseTitle || "General study task";
+    copy.append(title, course);
+    const badge = document.createElement("span");
+    badge.className = "badge";
+    badge.textContent = task.completed ? "Done" : "To do";
+    label.append(checkbox, copy, badge);
+    checkbox.addEventListener("change", async () => {
+      checkbox.disabled = true;
+      try {
+        const updated = await api("/tasks/complete", {
+          method: "POST",
+          body: { taskId: task.id, completed: checkbox.checked },
+        });
+        renderMine(updated);
+        showError();
+      } catch (error) {
+        checkbox.checked = !checkbox.checked;
+        showError(error.message || "Could not update this task.");
+        checkbox.disabled = false;
+      }
+    });
+    list.append(label);
+  }
 }
 
 async function load() {
-  const { user } = await requireLogin();
-  setHeader(user);
+  try {
+    const { user } = await me();
+    setHeader(user);
+    const [catalog, mine] = await Promise.all([api("/tasks"), api("/tasks/mine")]);
+    availableTasks = catalog.tasks || [];
+    renderChoices(availableTasks, new Set((mine.tasks || []).map((task) => task.id)));
+    renderMine(mine);
 
-  // logout
-  document.querySelector("#logoutBtn").addEventListener("click", async (e) => {
-    e.preventDefault();
-    await api("/auth/logout", { method:"POST" });
-    window.location.href = "../login/login.html";
-  });
+    byId("logoutBtn")?.addEventListener("click", (event) => {
+      event.preventDefault();
+      logout();
+      window.location.replace("../login/login.html");
+    });
 
-  const out = document.querySelector("#out");
-  const list = document.querySelector("#tasksList");
+    byId("saveBtn").addEventListener("click", async (event) => {
+      const button = event.currentTarget;
+      const output = byId("out");
+      button.disabled = true;
+      output.textContent = "";
+      try {
+        const taskIds = [...byId("tasksList").querySelectorAll('input[type="checkbox"]:checked')]
+          .map((input) => input.value);
+        const updated = await api("/tasks/select", {
+          method: "POST",
+          body: { taskIds },
+        });
+        renderChoices(availableTasks, new Set((updated.tasks || []).map((task) => task.id)));
+        renderMine(updated);
+        output.textContent = taskIds.length ? "Your task selection has been saved." : "Your checklist has been cleared.";
+        showError();
+      } catch (error) {
+        showError(error.message || "Could not save your task selection.");
+      } finally {
+        button.disabled = false;
+      }
+    });
 
-  const [{ tasks }, mine] = await Promise.all([
-    api("/tasks"),
-    api("/tasks/mine").catch(() => ({ tasks: [] }))
-  ]);
-
-  const selected = new Set((mine.tasks || []).map(t => t.id));
-
-  list.innerHTML = tasks.map(t => `
-    <label class="item pick">
-      <input type="checkbox" value="${t.id}" ${selected.has(t.id) ? "checked":""} />
-      <div>
-        <b>${escapeHTML(t.title)}</b>
-        <small class="muted">Cours: ${escapeHTML(t.course?.title || "—")}</small>
-      </div>
-      <span class="badge">${t.isDefault ? "Default" : "Task"}</span>
-    </label>
-  `).join("");
-
-  document.querySelector("#saveBtn").addEventListener("click", async () => {
-    out.textContent = "";
-    const ids = [...list.querySelectorAll("input[type=checkbox]:checked")].map(i => i.value);
-    if (!ids.length) return (out.textContent = "Select at least one task.");
-    await api("/tasks/select", { method:"POST", body: { taskIds: ids } });
-    out.textContent = "Saved.";
-    await renderMine();
-  });
-
-  async function renderMine() {
-    const mine2 = await api("/tasks/mine").catch(() => ({ tasks: [] }));
-    const mineList = document.querySelector("#mineList");
-    const mineOut = document.querySelector("#mineOut");
-    mineOut.textContent = "";
-
-    if (!mine2.tasks.length) {
-      mineList.innerHTML = `<div class="muted">No selected tasks.</div>`;
-      return;
-    }
-
-    mineList.innerHTML = "";
-    for (const t of mine2.tasks) {
-      const el = document.createElement("div");
-      el.className = "item";
-      el.innerHTML = `
-        <input type="checkbox" ${t.completed ? "checked":""} />
-        <div>
-          <b>${escapeHTML(t.title)}</b>
-          <small>Cours: ${escapeHTML(t.courseTitle || "—")}</small>
-        </div>
-        <span class="badge">${t.completed ? "Done" : "Todo"}</span>
-      `;
-      el.querySelector("input").addEventListener("change", async (e) => {
-        await api("/tasks/complete", { method:"POST", body: { taskId: t.id, completed: e.target.checked } });
-        await renderMine();
+    byId("taskSearch").addEventListener("input", (event) => {
+      const query = event.currentTarget.value.trim().toLowerCase();
+      byId("tasksList").querySelectorAll("[data-search]").forEach((item) => {
+        item.hidden = Boolean(query) && !item.dataset.search.includes(query);
       });
-      mineList.appendChild(el);
+    });
+  } catch (error) {
+    showError(error.message || "Could not load tasks.");
+    if (!localStorage.getItem("uniflow_token") && !sessionStorage.getItem("uniflow_token")) {
+      window.location.replace("../login/login.html");
     }
   }
-
-  await renderMine();
-}
-function setupMobileMenu() {
-  const btn = document.getElementById("menuBtn");
-  const overlay = document.getElementById("overlay");
-  if (!btn || !overlay) return;
-
-  const open = () => {
-    document.body.classList.add("menu-open");
-    overlay.hidden = false;
-    btn.setAttribute("aria-expanded", "true");
-  };
-
-  const close = () => {
-    document.body.classList.remove("menu-open");
-    overlay.hidden = true;
-    btn.setAttribute("aria-expanded", "false");
-  };
-
-  btn.addEventListener("click", () => {
-    document.body.classList.contains("menu-open") ? close() : open();
-  });
-
-  overlay.addEventListener("click", close);
-
-  // Close menu when clicking a nav link
-  document.querySelectorAll(".nav a").forEach(a => {
-    a.addEventListener("click", close);
-  });
-
-  // Close on ESC
-  window.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") close();
-  });
 }
 
-setupMobileMenu();
 load();

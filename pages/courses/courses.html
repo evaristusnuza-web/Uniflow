@@ -1,74 +1,68 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>UniFlow • Courses</title>
-  <link rel="stylesheet" href="../../shared/layout.css" />
-  <link rel="stylesheet" href="courses.css" />
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f3f5fa">
+  <title>My courses · UniFlow</title>
+  <link rel="stylesheet" href="../shared/layout.css">
+  <link rel="stylesheet" href="courses.css">
   <script type="module" src="courses.js"></script>
 </head>
 <body>
   <div class="app">
     <aside class="sidebar">
-      <div class="brand">
-        <div class="logo"><img src="../assets/logo.png" alt="UniFlow Logo"></div>
-        <div>
-          <h1>UniFlow</h1>
-          <p>Learn. Progress. Succeed.</p>
-        </div>
-      </div>
-
-      <nav class="nav">
+      <a class="brand" href="../dashboard/index.html" aria-label="UniFlow home">
+        <div class="logo"><img src="../assets/logo.png" alt=""></div>
+        <div><h1>UniFlow</h1><p>Learn. Progress. Succeed.</p></div>
+      </a>
+      <nav class="nav" aria-label="Main navigation">
         <a href="../dashboard/index.html">Home</a>
         <a class="active" href="courses.html">My Courses</a>
         <a href="../tasks/tasks.html">Tasks</a>
         <a class="admin" id="adminLink" href="../admin/admin.html">Admin</a>
-        <a id="logoutBtn" href="../login/login.html">Log Out</a>
+        <a id="logoutBtn" href="../login/login.html">Log out</a>
       </nav>
-
       <footer>© 2026 UniFlow</footer>
     </aside>
 
     <main class="main">
       <header class="topbar">
-        <div class="search">
-          <input placeholder="Search courses..." />
-        </div>
+        <button class="menuBtn" id="menuBtn" type="button" aria-label="Open navigation" aria-expanded="false">☰</button>
+        <label class="search" for="courseSearch"><input id="courseSearch" type="search" placeholder="Search courses…" autocomplete="off"></label>
         <div class="user">
-          <div class="avatar" id="avatar"><img src="../assets/profile.png" alt=""></div>
-          <div>
-            <div class="name" id="username">Student</div>
-            <div class="meta" id="major">Major not set</div>
-          </div>
+          <div class="avatar" id="avatar">S</div>
+          <div><div class="name" id="username">Student</div><div class="meta" id="major">Major not set</div></div>
         </div>
       </header>
 
       <section class="content">
+        <p class="page-error" id="pageError" role="alert" hidden></p>
         <section class="card">
           <div class="row">
-            <h2>My Courses</h2>
-            <button class="btn primary" id="saveBtn">Save selection</button>
+            <div><h2>My Courses</h2><p class="muted">Choose the courses you want to follow. Your progress is saved to your account.</p></div>
+            <button class="btn primary" id="saveBtn" type="button">Save selection</button>
           </div>
-          <p class="muted">Select the courses you want on your dashboard.</p>
-          <div class="list" id="coursesList"></div>
-          <p class="muted out" id="out"></p>
+          <div class="list" id="coursesList" aria-live="polite"></div>
+          <p class="muted out" id="out" role="status"></p>
         </section>
 
         <section class="card">
-          <h2>Update Progress</h2>
-          <p class="muted">Demo control: set progress % for a selected course.</p>
-
+          <h2>Update course progress</h2>
+          <p class="muted">Record your progress from 0 to 100 percent for a course you have selected.</p>
           <form class="progressForm" id="progressForm">
-            <select id="progressCourse"></select>
-            <input id="progressPct" type="number" min="0" max="100" value="0" />
-            <button class="btn" type="submit">Update</button>
+            <label class="sr-only" for="progressCourse">Selected course</label>
+            <select id="progressCourse" required></select>
+            <label class="sr-only" for="progressPct">Progress percentage</label>
+            <input id="progressPct" type="number" min="0" max="100" step="1" value="0" required>
+            <span class="muted">%</span>
+            <button class="btn" type="submit">Update progress</button>
           </form>
-
-          <p class="muted out" id="progressOut"></p>
+          <p class="muted out" id="progressOut" role="status"></p>
         </section>
       </section>
     </main>
   </div>
+  <div class="overlay" id="overlay" hidden></div>
 </body>
 </html>

@@ -1,150 +1,232 @@
-import { api, API_BASE, escapeHTML, initials } from "../../shared/api.js";
+import { api, downloadFile, initials, logout, me } from "../shared/api.js";
+import { setupMobileMenu } from "../shared/menu.js";
 
-async function requireAdmin() {
-  const me = await api("/me").catch(() => null);
-  if (!me) { window.location.href = "../login/login.html"; throw new Error("Not logged in"); }
-  if (me.user.role !== "ADMIN") {
-    document.body.innerHTML = `<div style="padding:24px;font-family:system-ui">
-      <h2>Forbidden</h2><p>You are not an admin.</p>
-      <a href="../dashboard/index.html">Back</a>
-    </div>`;
-    throw new Error("Not admin");
-  }
-  return me.user;
+setupMobileMenu();
+const byId = (id) => document.getElementById(id);
+
+function setMessage(id, message, state = "") {
+  const element = byId(id);
+  if (!element) return;
+  element.textContent = message;
+  element.dataset.state = state;
 }
 
-async function loadCoursesInto(ids) {
+function showPageError(message = "") {
+  const element = byId("pageError");
+  if (!element) return;
+  element.textContent = message;
+  element.hidden = !message;
+}
+
+async function requireAdmin() {
+  const { user } = await me();
+  if (user.role !== "ADMIN") {
+    document.body.innerHTML = "";
+    const main = document.createElement("main");
+    main.className = "forbidden card";
+    const title = document.createElement("h1");
+    title.textContent = "Administrator access required";
+    const text = document.createElement("p");
+    text.textContent = "Your account does not have permission to manage UniFlow content.";
+    const link = document.createElement("a");
+    link.href = "../dashboard/index.html";
+    link.className = "btn primary";
+    link.textContent = "Return to dashboard";
+    main.append(title, text, link);
+    document.body.append(main);
+    throw new Error("Administrator access required.");
+  }
+  return user;
+}
+
+async function loadCoursesInto(selectorIds) {
   const { courses } = await api("/courses");
-  for (const selId of ids) {
-    const sel = document.querySelector(selId);
-    sel.innerHTML = `<option value="">—</option>` + courses.map(c =>
-      `<option value="${c.id}">${escapeHTML(c.title)}</option>`
-    ).join("");
+  for (const selectorId of selectorIds) {
+    const select = byId(selectorId);
+    const first = select.options[0];
+    select.replaceChildren(first || new Option("No course", ""));
+    for (const course of courses || []) {
+      const option = document.createElement("option");
+      option.value = course.id;
+      option.textContent = course.title;
+      select.append(option);
+    }
+  }
+}
+
+function renderPapers(papers) {
+  const list = byId("papersList");
+  list.replaceChildren();
+  if (!papers.length) {
+    const empty = document.createElement("p");
+    empty.className = "muted empty-state";
+    empty.textContent = "No papers have been uploaded yet.";
+    list.append(empty);
+    return;
+  }
+  for (const paper of papers) {
+    const row = document.createElement("div");
+    row.className = "item library-item";
+    const details = document.createElement("div");
+    const title = document.createElement("b");
+    title.textContent = paper.title;
+    const meta = document.createElement("small");
+    meta.textContent = [paper.course?.title, paper.year, paper.language].filter(Boolean).join(" · ") || "PDF study paper";
+    details.append(title, meta);
+    const link = document.createElement("a");
+    link.className = "badge";
+    link.href = "#";
+    link.textContent = "Download PDF";
+    link.addEventListener("click", async (event) => {
+      event.preventDefault();
+      link.setAttribute("aria-busy", "true");
+      try {
+        const fileName = `${paper.title}.pdf`;
+        await downloadFile(paper.fileUrl, fileName);
+      } catch (error) {
+        showPageError(error.message || "Could not download this paper.");
+      } finally {
+        link.removeAttribute("aria-busy");
+      }
+    });
+    row.append(details, link);
+    list.append(row);
+  }
+}
+
+function renderBooks(books) {
+  const list = byId("booksList");
+  list.replaceChildren();
+  if (!books.length) {
+    const empty = document.createElement("p");
+    empty.className = "muted empty-state";
+    empty.textContent = "No book listings yet.";
+    list.append(empty);
+    return;
+  }
+  for (const book of books) {
+    const row = document.createElement("div");
+    row.className = "item library-item";
+    const details = document.createElement("div");
+    const title = document.createElement("b");
+    title.textContent = book.title;
+    const meta = document.createElement("small");
+    meta.textContent = [book.author, book.course?.title].filter(Boolean).join(" · ") || "Book";
+    details.append(title, meta);
+    const price = document.createElement("span");
+    price.className = "badge";
+    price.textContent = `${((Number(book.priceCents) || 0) / 100).toFixed(2)} ${book.currency || "USD"}`;
+    row.append(details, price);
+    list.append(row);
   }
 }
 
 async function refreshPreview() {
-  const [{ papers }, { books }] = await Promise.all([api("/papers"), api("/books")]);
+  const [paperResult, bookResult] = await Promise.all([api("/papers"), api("/books")]);
+  renderPapers(paperResult.papers || []);
+  renderBooks(bookResult.books || []);
+}
 
-  const papersList = document.querySelector("#papersList");
-  papersList.innerHTML = papers.length ? papers.map(p => `
-    <div class="item">
-      <div>
-        <b>${escapeHTML(p.title)}</b>
-        <small>${escapeHTML(p.course?.title || "—")} • ${p.year || "?"} • ${escapeHTML(p.language || "—")}</small>
-      </div>
-      ${p.fileUrl ? `<a class="badge" target="_blank" href="${API_BASE}${p.fileUrl}">⬇</a>` : `<span class="badge">—</span>`}
-    </div>
-  `).join("") : `<div class="muted">No papers yet.</div>`;
+function formObject(form) {
+  return Object.fromEntries(new FormData(form).entries());
+}
 
-  const booksList = document.querySelector("#booksList");
-  booksList.innerHTML = books.length ? books.map(b => `
-    <div class="item">
-      <div>
-        <b>${escapeHTML(b.title)}</b>
-        <small>${escapeHTML(b.author || "—")} • ${escapeHTML(b.course?.title || "—")}</small>
-      </div>
-      <span class="badge">${(b.priceCents/100).toFixed(2)} ${escapeHTML(b.currency)}</span>
-    </div>
-  `).join("") : `<div class="muted">No books yet.</div>`;
+function bindForm(formId, outputId, submit) {
+  byId(formId).addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const button = form.querySelector('button[type="submit"]');
+    button.disabled = true;
+    setMessage(outputId, "Saving…");
+    try {
+      await submit(form);
+      form.reset();
+      setMessage(outputId, "Saved successfully.", "success");
+      showPageError();
+    } catch (error) {
+      setMessage(outputId, "");
+      showPageError(error.message || "The request could not be completed.");
+    } finally {
+      button.disabled = false;
+    }
+  });
 }
 
 async function boot() {
-  const user = await requireAdmin();
+  try {
+    const user = await requireAdmin();
+    byId("username").textContent = user.username;
+    byId("major").textContent = user.major || "Administrator";
+    byId("avatar").textContent = initials(user.username);
+    byId("adminLink").style.display = "block";
 
-  document.querySelector("#username").textContent = user.username;
-  document.querySelector("#major").textContent = user.major || "Admin";
-  document.querySelector("#avatar").textContent = initials(user.username);
+    byId("logoutBtn").addEventListener("click", (event) => {
+      event.preventDefault();
+      logout();
+      window.location.replace("../login/login.html");
+    });
 
-  // show admin nav item
-  document.querySelector("#adminLink").style.display = "block";
+    await loadCoursesInto(["taskCourse", "paperCourse", "bookCourse"]);
+    await refreshPreview();
+    byId("refreshBtn").addEventListener("click", async () => {
+      try {
+        await refreshPreview();
+        showPageError();
+      } catch (error) {
+        showPageError(error.message || "Could not refresh the library.");
+      }
+    });
 
-  // logout
-  document.querySelector("#logoutBtn").addEventListener("click", async (e) => {
-    e.preventDefault();
-    await api("/auth/logout", { method:"POST" });
-    window.location.href = "../login/login.html";
-  });
+    bindForm("courseForm", "courseOut", async (form) => {
+      const body = formObject(form);
+      for (const key of ["description", "icon"]) if (!body[key]) delete body[key];
+      await api("/admin/courses", { method: "POST", body });
+      await loadCoursesInto(["taskCourse", "paperCourse", "bookCourse"]);
+    });
 
-  await loadCoursesInto(["#taskCourse", "#paperCourse", "#bookCourse"]);
-  await refreshPreview();
+    bindForm("taskForm", "taskOut", async (form) => {
+      const body = formObject(form);
+      body.isDefault = form.elements.namedItem("isDefault").checked;
+      if (!body.courseId) delete body.courseId;
+      if (!body.description) delete body.description;
+      await api("/admin/tasks", { method: "POST", body });
+    });
 
-  document.querySelector("#refreshBtn").onclick = refreshPreview;
-
-  // create course
-  courseForm.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    courseOut.textContent = "";
-    const body = Object.fromEntries(new FormData(e.target).entries());
-    try {
-      await api("/admin/courses", { method:"POST", body });
-      courseOut.textContent = "Course created.";
-      e.target.reset();
-      await loadCoursesInto(["#taskCourse", "#paperCourse", "#bookCourse"]);
-    } catch (err) { courseOut.textContent = err.message; }
-  });
-
-  // create task
-  taskForm.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    taskOut.textContent = "";
-    const fd = new FormData(e.target);
-    const body = Object.fromEntries(fd.entries());
-    body.isDefault = e.target.querySelector("[name=isDefault]").checked;
-    if (!body.courseId) delete body.courseId;
-
-    try {
-      await api("/admin/tasks", { method:"POST", body });
-      taskOut.textContent = "Task created.";
-      e.target.reset();
-    } catch (err) { taskOut.textContent = err.message; }
-  });
-
-  // upload paper
-  paperForm.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    paperOut.textContent = "";
-
-    const form = e.target;
-    const file = form.querySelector("[name=file]").files[0];
-    if (!file) return (paperOut.textContent = "Choose a PDF file.");
-
-    const meta = {
-      title: form.title.value,
-      year: form.year.value ? Number(form.year.value) : undefined,
-      language: form.language.value || undefined,
-      courseId: form.courseId.value || undefined
-    };
-
-    const fd = new FormData();
-    fd.append("file", file);
-    fd.append("meta", JSON.stringify(meta));
-
-    try {
-      await api("/admin/papers/upload", { method:"POST", body: fd });
-      paperOut.textContent = "Uploaded.";
-      form.reset();
+    bindForm("paperForm", "paperOut", async (form) => {
+      const file = form.elements.namedItem("file").files[0];
+      if (!file) throw new Error("Choose a PDF file to upload.");
+      const metadata = {
+        title: form.elements.namedItem("title").value.trim(),
+        year: form.elements.namedItem("year").value
+          ? Number(form.elements.namedItem("year").value)
+          : undefined,
+        language: form.elements.namedItem("language").value.trim() || undefined,
+        courseId: form.elements.namedItem("courseId").value || undefined,
+      };
+      const body = new FormData();
+      body.append("file", file);
+      body.append("meta", JSON.stringify(metadata));
+      await api("/admin/papers/upload", { method: "POST", body });
       await refreshPreview();
-    } catch (err) { paperOut.textContent = err.message; }
-  });
+    });
 
-  // create book
-  bookForm.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    bookOut.textContent = "";
-    const body = Object.fromEntries(new FormData(e.target).entries());
-    body.priceCents = body.priceCents ? Number(body.priceCents) : 0;
-    if (!body.courseId) delete body.courseId;
-    if (!body.author) delete body.author;
-    if (!body.coverUrl) delete body.coverUrl;
-
-    try {
-      await api("/admin/books", { method:"POST", body });
-      bookOut.textContent = "Book created.";
-      e.target.reset();
+    bindForm("bookForm", "bookOut", async (form) => {
+      const body = formObject(form);
+      body.priceCents = body.priceCents ? Number(body.priceCents) : 0;
+      body.currency = (body.currency || "USD").trim().toUpperCase();
+      for (const key of ["author", "coverUrl", "courseId"]) if (!body[key]) delete body[key];
+      await api("/admin/books", { method: "POST", body });
       await refreshPreview();
-    } catch (err) { bookOut.textContent = err.message; }
-  });
+    });
+  } catch (error) {
+    if (!localStorage.getItem("uniflow_token") && !sessionStorage.getItem("uniflow_token")) {
+      window.location.replace("../login/login.html");
+      return;
+    }
+    if (error.message !== "Administrator access required.") {
+      showPageError(error.message || "Could not load the administration panel.");
+    }
+  }
 }
 
 boot();

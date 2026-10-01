@@ -1,22 +1,30 @@
-import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from "@nestjs/common";
+import {
+  CanActivate,
+  ExecutionContext,
+  Injectable,
+  UnauthorizedException,
+} from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 
 @Injectable()
 export class JwtGuard implements CanActivate {
-  constructor(private jwt: JwtService) {}
+  constructor(private readonly jwt: JwtService) {}
 
-  canActivate(ctx: ExecutionContext) {
-    const req = ctx.switchToHttp().getRequest();
-    const auth = req.headers?.authorization || "";
-    const token = auth.startsWith("Bearer ") ? auth.slice(7) : null;
-    if (!token) throw new UnauthorizedException("Missing token");
+  async canActivate(context: ExecutionContext): Promise<boolean> {
+    const request = context.switchToHttp().getRequest();
+    const authorization = request.headers?.authorization || "";
+    const token = authorization.startsWith("Bearer ")
+      ? authorization.slice(7).trim()
+      : "";
+    if (!token) throw new UnauthorizedException("Missing access token.");
 
     try {
-      const payload = this.jwt.verify(token);
-      req.userId = payload.sub;
+      const payload = await this.jwt.verifyAsync<{ sub?: string }>(token);
+      if (!payload.sub) throw new Error("Token subject is missing.");
+      request.userId = payload.sub;
       return true;
     } catch {
-      throw new UnauthorizedException("Invalid token");
+      throw new UnauthorizedException("Invalid or expired access token.");
     }
   }
 }

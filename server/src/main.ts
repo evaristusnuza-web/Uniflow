@@ -1,17 +1,29 @@
 import { NestFactory } from "@nestjs/core";
-import { AppModule } from "./app.module";
+import { NestExpressApplication } from "@nestjs/platform-express";
 import { ConfigService } from "@nestjs/config";
+import { AppModule } from "./app.module";
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
   const config = app.get(ConfigService);
 
+  const configuredOrigins = config
+    .get<string>("CLIENT_ORIGIN")
+    ?.split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean);
   app.enableCors({
-    origin: config.get<string>("CLIENT_ORIGIN"),
-    credentials: false
+    origin: configuredOrigins?.length ? configuredOrigins : true,
+    credentials: false,
+    allowedHeaders: ["Content-Type", "Authorization"],
   });
 
-  const port = process.env.PORT ? Number(process.env.PORT) : 3000;
-  await app.listen(port);
+  const port = Number(config.get<string>("PORT") || 3000);
+  await app.listen(port, "0.0.0.0");
+  console.log(`UniFlow API listening on 0.0.0.0:${port}`);
 }
-bootstrap();
+
+void bootstrap().catch((error: unknown) => {
+  console.error("Failed to start UniFlow API.", error);
+  process.exitCode = 1;
+});

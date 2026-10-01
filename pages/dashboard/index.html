@@ -23,7 +23,7 @@
         <a class="active" href="index.html">Home</a>
         <a href="../courses/courses.html">My Courses</a>
         <a href="../tasks/tasks.html">Tasks</a>
-        <a href="#assistant">AI Assistant</a>
+        <a href="#assistant">Study helper</a>
         <a class="admin" id="adminLink" href="../admin/admin.html">Admin</a>
         <a id="logoutBtn" href="../login/login.html">Log Out</a>
       </nav>
@@ -35,7 +35,7 @@
           <li>Unlimited downloads</li>
           <li>Advanced AI</li>
         </ul>
-        <button type="button">Go Premium</button>
+        <button type="button" disabled title="Premium features are not available yet">Premium coming soon</button>
       </div>
 
       <footer>© 2026 UniFlow</footer>
@@ -45,7 +45,7 @@
       <header class="topbar">
         <button class="menuBtn" id="menuBtn" aria-label="Open menu" aria-expanded="false">☰</button>
         <div class="search">
-          <input placeholder="Search (courses, books, subjects, etc.)" />
+          <input id="dashboardSearch" type="search" placeholder="Search your courses, tasks, books…" autocomplete="off" />
         </div>
         <div class="user">
           <div class="avatar" id="avatar"><img src="../assets/profile.png" alt="#" class="img img2"></div>
@@ -57,6 +57,7 @@
       </header>
 
       <section class="content">
+        <p class="page-error" id="dashboardError" role="alert" hidden></p>
         <section class="hero card">
           <h2 id="welcome">Welcome, Student</h2>
           <p class="muted">Ready to reach your goals today?</p>
@@ -78,7 +79,7 @@
 
           <article class="card">
             <div class="row">
-              <h3>Tasks of the day</h3>
+              <h3>My Tasks</h3>
               <span class="badge" id="tasksSummary">0 / 0</span>
             </div>
             <p class="muted" id="tasksSubtitle">Choose tasks to get started.</p>
@@ -97,7 +98,7 @@
               </div>
             </div>
             <div class="actions">
-              <button class="btn ghost" type="button">View my path</button>
+              <a class="btn ghost" href="../courses/courses.html">View my path</a>
             </div>
           </article>
         </section>
@@ -105,7 +106,7 @@
         <section class="cards2">
           <article class="card">
             <div class="row">
-              <h3>Tasks of the day</h3>
+              <h3>My Tasks</h3>
               <span class="badge">Today</span>
             </div>
             <div class="list" id="taskList"></div>
@@ -137,12 +138,12 @@
 
           <article class="card">
             <div class="row">
-              <h3>AI Assistant</h3>
-              <span class="badge">Beta</span>
+              <h3>UniFlow Study Assistant</h3>
+              <span class="badge">Guided study</span>
             </div>
 
             <div class="assistant">
-              <div class="bot">AI</div>
+              <div class="bot">Guide</div>
               <div class="chat">
                 <div class="chatLog" id="chatLog"></div>
                 <div class="quick">
@@ -151,10 +152,10 @@
                   <button class="btn ghost" data-quick="Summarize what I should study this week.">Summary</button>
                 </div>
                 <form class="chatForm" id="chatForm">
-                  <input id="chatInput" placeholder="Ask me a question..." />
+                  <input id="chatInput" type="text" maxlength="2000" placeholder="Ask for a study strategy…" autocomplete="off" required />
                   <button class="send" type="submit">Send</button>
                 </form>
-                <div class="muted" id="aiHint"></div>
+                <div class="muted" id="aiHint" aria-live="polite"></div>
               </div>
             </div>
           </article>

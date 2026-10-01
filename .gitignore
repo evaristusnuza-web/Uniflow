@@ -1,0 +1,17 @@
+# Node dependencies and generated outputs
+node_modules/
+server/node_modules/
+server/dist/
+server/coverage/
+server/uploads/
+
+# Local configuration and secrets
+.env
+.env.*
+!server/.env.example
+server/.env
+
+# Logs and temporary files
+*.log
+npm-debug.log*
+.DS_Store

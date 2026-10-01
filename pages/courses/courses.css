@@ -1,9 +1,33 @@
-.out{min-height:18px}
-.progressForm{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
-.progressForm select,.progressForm input{
-  border:1px solid var(--line);
-  border-radius:14px;
-  padding:10px 12px;
-  outline:none;
-  background:#a19f9f;
+.out { min-height: 18px; }
+
+.progressForm {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+}
+
+.progressForm select,
+.progressForm input {
+  min-height: 42px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 9px 12px;
+  background: #fff;
+  color: var(--text);
+}
+
+.progressForm select { min-width: min(100%, 260px); }
+.progressForm input { width: 100px; }
+
+.pick { align-items: center; cursor: pointer; transition: border-color .15s ease, background .15s ease; }
+.pick:hover { border-color: rgba(79, 99, 255, .42); background: #fbfcff; }
+.pick > div { flex: 1; min-width: 0; }
+.pick b { display: block; }
+.pick small { display: block; margin-top: 4px; }
+
+@media (max-width: 600px) {
+  .row { align-items: flex-start; flex-direction: column; }
+  .row > button { width: 100%; }
 }

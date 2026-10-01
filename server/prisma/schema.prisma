@@ -3,9 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 enum Role {
@@ -14,12 +13,107 @@ enum Role {
 }
 
 model User {
-  id           String   @id @default(cuid())
-  email        String   @unique
+  id           String       @id @default(cuid())
+  email        String       @unique
   username     String
   major        String?
   passwordHash String
-  role         Role     @default(USER)
+  role         Role         @default(USER)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  courses      UserCourse[]
+  tasks        UserTask[]
+  papers       Paper[]      @relation("PaperUploader")
+  books        Book[]       @relation("BookCreator")
+}
+
+model Course {
+  id          String       @id @default(cuid())
+  slug        String       @unique
+  title       String
+  description String?
+  icon        String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  students    UserCourse[]
+  tasks       Task[]
+  papers      Paper[]
+  books       Book[]
+
+  @@index([title])
+}
+
+model UserCourse {
+  userId     String
+  courseId   String
+  progressPct Int      @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course     Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@id([userId, courseId])
+  @@index([courseId])
+}
+
+model Task {
+  id        String     @id @default(cuid())
+  title     String
+  description String?
+  isDefault Boolean    @default(false)
+  courseId  String?
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  course    Course?    @relation(fields: [courseId], references: [id], onDelete: SetNull)
+  students  UserTask[]
+
+  @@index([courseId, title])
+}
+
+model UserTask {
+  userId    String
+  taskId    String
+  completed Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@id([userId, taskId])
+  @@index([taskId])
+}
+
+model Paper {
+  id           String   @id @default(cuid())
+  title        String
+  year         Int?
+  language     String?
+  fileUrl      String
+  fileName     String
+  mimeType     String
+  sizeBytes    Int
+  courseId     String?
+  uploadedById String?
   createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  course       Course?  @relation(fields: [courseId], references: [id], onDelete: SetNull)
+  uploadedBy   User?    @relation("PaperUploader", fields: [uploadedById], references: [id], onDelete: SetNull)
+
+  @@index([courseId, createdAt])
+}
+
+model Book {
+  id          String   @id @default(cuid())
+  title       String
+  author      String?
+  priceCents  Int      @default(0)
+  currency    String   @default("USD")
+  coverUrl    String?
+  courseId    String?
+  createdById String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  course      Course?  @relation(fields: [courseId], references: [id], onDelete: SetNull)
+  createdBy   User?    @relation("BookCreator", fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@index([courseId, createdAt])
 }

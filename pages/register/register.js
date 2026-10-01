@@ -1,49 +1,44 @@
-import { api, setToken } from "../shared/api.js";
-
-console.log("register.js loaded");
+import { register } from "../shared/api.js";
 
 const form = document.querySelector("#registerForm");
-const msg = document.querySelector("#msg");
-const btn = document.querySelector(".btn1");
+const message = document.querySelector("#msg");
+const submitButton = form?.querySelector('button[type="submit"]');
+const password = document.querySelector("#pw");
+const toggle = document.querySelector("#pwToggle");
 
-import { login } from "../shared/api.js";
+if (toggle && password) {
+  toggle.addEventListener("click", () => {
+    const showing = password.type === "password";
+    password.type = showing ? "text" : "password";
+    toggle.textContent = showing ? "Hide" : "Show";
+    toggle.setAttribute("aria-label", showing ? "Hide password" : "Show password");
+    toggle.setAttribute("aria-pressed", String(showing));
+  });
+}
 
-form.addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const email = document.querySelector(".email").value.trim();
-  const password = document.querySelector(".password").value;
+form?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  if (!message || !submitButton) return;
+  message.textContent = "";
 
-  await login({ email, password }); // stores token
-  window.location.href = "../dashboard/index.html";
-});
-form.addEventListener("submit", async (e) => {
-  e.preventDefault(); // prevents page reload
-  msg.textContent = "";
+  const username = document.querySelector("#full_name")?.value.trim();
+  const email = document.querySelector("#email")?.value.trim();
+  const passwordValue = password?.value || "";
+  const major = document.querySelector("#major")?.value.trim();
+  if (!username || !email || passwordValue.length < 8) {
+    message.textContent = "Enter your name and a valid email, and choose a password with at least 8 characters.";
+    return;
+  }
 
-  const username = document.querySelector(".name").value.trim();
-  const email = document.querySelector(".email").value.trim();
-  const password = document.querySelector(".password").value;
-
-  btn.disabled = true;
-  btn.textContent = "creating...";
-
+  submitButton.disabled = true;
+  submitButton.textContent = "Creating account…";
   try {
-    const res = await api("/auth/register", {
-      method: "POST",
-      body: { username, email, password }
-    });
-
-    console.log("register response:", res);
-
-    if (!res.token) throw new Error("No token returned from server.");
-    setToken(res.token);
-
-    window.location.href = "../dashboard/index.html";
-  } catch (err) {
-    console.error(err);
-    msg.textContent = err.message || "Register failed";
+    await register({ username, email, password: passwordValue, major });
+    window.location.replace("../dashboard/index.html");
+  } catch (error) {
+    message.textContent = error.message || "Account creation failed. Please try again.";
   } finally {
-    btn.disabled = false;
-    btn.textContent = "sign up";
+    submitButton.disabled = false;
+    submitButton.textContent = "Create account";
   }
 });
