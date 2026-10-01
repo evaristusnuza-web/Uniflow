@@ -288,8 +288,8 @@ class AccountingDesktop:
         right.pack(side="right", padx=(16, 0))
         for caption, command, style in actions:
             ttk.Button(right, text=caption, command=command, style=style or "TButton").pack(side="left", padx=(7, 0))
-        content = tk.Frame(self.workspace, bg=C["canvas"], padx=28, pady=(0, 20))
-        content.pack(fill="both", expand=True)
+        content = tk.Frame(self.workspace, bg=C["canvas"], padx=28, pady=0)
+        content.pack(fill="both", expand=True, pady=(0, 20))
         return content
 
     def show_page(self, page):
