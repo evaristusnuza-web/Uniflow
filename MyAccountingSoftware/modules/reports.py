@@ -1,170 +1,177 @@
+"""Read-only sales, purchasing, payment, inventory, and financial reports."""
+
 from database import cursor
 from languages import t
+
+
+def _pause():
+    input("\n" + t("press_enter"))
 
 
 def reports_menu():
     while True:
         print()
-        print("========== REPORTS ==========")
-        print("1. Sales report")
-        print("2. Purchases report")
-        print("3. Payments report")
-        print("4. Inventory report")
-        print("5. Financial summary")
-        print("6. Back")
+        print(f"========== {t('reports').upper()} ==========")
+        print(f"1. {t('sales_report')}")
+        print(f"2. {t('purchases_report')}")
+        print(f"3. {t('payments_report')}")
+        print(f"4. {t('inventory_report')}")
+        print(f"5. {t('financial_summary')}")
+        print(f"6. {t('back')}")
 
         choice = input(t("choose_option") + " ").strip()
-
-        if choice == "1":
-            sales_report()
-
-        elif choice == "2":
-            purchases_report()
-
-        elif choice == "3":
-            payments_report()
-
-        elif choice == "4":
-            inventory_report()
-
-        elif choice == "5":
-            financial_summary()
-
-        elif choice == "6":
-            break
-
-        else:
+        reports = {
+            "1": sales_report,
+            "2": purchases_report,
+            "3": payments_report,
+            "4": inventory_report,
+            "5": financial_summary,
+        }
+        if choice == "6":
+            return
+        report = reports.get(choice)
+        if report is None:
             print(t("invalid_option"))
+            continue
+        report()
 
 
 def sales_report():
     print()
-    print("========== SALES REPORT ==========")
-
-    cursor.execute("""
-        SELECT COUNT(*), COALESCE(SUM(total), 0)
-        FROM sales
-    """)
-
-    result = cursor.fetchone()
-
-    print(f"Total sales: {result[0]}")
-    print(f"Total sales amount: {result[1]:,.2f}")
-
-    input("\nPress Enter to continue...")
+    print(f"========== {t('sales_report').upper()} ==========")
+    cursor.execute(
+        "SELECT COUNT(*), COALESCE(SUM(total), 0) FROM sales"
+    )
+    count, amount = cursor.fetchone()
+    print(f"{t('total_sales')}: {count}")
+    print(f"{t('sales_amount')}: {amount:,.2f}")
+    _pause()
 
 
 def purchases_report():
     print()
-    print("========== PURCHASES REPORT ==========")
-
-    cursor.execute("""
-        SELECT COUNT(*), COALESCE(SUM(total), 0)
-        FROM purchases
-    """)
-
-    result = cursor.fetchone()
-
-    print(f"Total purchases: {result[0]}")
-    print(f"Total purchase amount: {result[1]:,.2f}")
-
-    input("\nPress Enter to continue...")
+    print(f"========== {t('purchases_report').upper()} ==========")
+    cursor.execute(
+        "SELECT COUNT(*), COALESCE(SUM(total), 0) FROM purchases"
+    )
+    count, amount = cursor.fetchone()
+    print(f"{t('total_purchases')}: {count}")
+    print(f"{t('purchases_amount')}: {amount:,.2f}")
+    _pause()
 
 
 def payments_report():
     print()
-    print("========== PAYMENTS REPORT ==========")
-
-    cursor.execute("""
-        SELECT COUNT(*), COALESCE(SUM(amount), 0)
+    print(f"========== {t('payments_report').upper()} ==========")
+    cursor.execute(
+        """
+        SELECT payment_type, COUNT(*), COALESCE(SUM(amount), 0)
         FROM payments
-    """)
+        GROUP BY payment_type
+        """
+    )
+    totals = {row[0]: (row[1], row[2]) for row in cursor.fetchall()}
 
-    result = cursor.fetchone()
-
-    print(f"Total payments: {result[0]}")
-    print(f"Total payment amount: {result[1]:,.2f}")
-
-    input("\nPress Enter to continue...")
+    for payment_type, label in (
+        ("customer", "customer_payments"),
+        ("supplier", "supplier_payments"),
+    ):
+        count, amount = totals.get(payment_type, (0, 0))
+        print(f"{t(label)}: {count} | {t('amount')}: {amount:,.2f}")
+    _pause()
 
 
 def inventory_report():
     print()
-    print("========== INVENTORY REPORT ==========")
-
-    cursor.execute("""
-        SELECT id, name, quantity, price
+    print(f"========== {t('inventory_report').upper()} ==========")
+    cursor.execute(
+        """
+        SELECT id, name, quantity, cost_price, price
         FROM products
         ORDER BY name
-    """)
-
+        """
+    )
     products = cursor.fetchall()
 
     if not products:
-        print("No products found.")
-        input("\nPress Enter to continue...")
+        print(t("no_products_found"))
+        _pause()
         return
 
     print()
-    print(f"{'ID':<6}{'PRODUCT':<30}{'QUANTITY':<12}{'PRICE':<12}")
-    print("-" * 60)
+    print(
+        f"{t('id'):<6}{t('name'):<24}{t('quantity'):<12}"
+        f"{t('buying_price'):<16}{t('selling_price'):<16}"
+    )
+    print("-" * 74)
 
-    total_value = 0
-
-    for product in products:
-        product_id = product[0]
-        name = product[1]
-        quantity = product[2]
-        price = product[3]
-
-        value = quantity * price
-        total_value += value
-
+    total_value = 0.0
+    for product_id, name, quantity, cost_price, selling_price in products:
+        cost_price = float(cost_price or 0)
+        selling_price = float(selling_price or 0)
+        total_value += quantity * cost_price
         print(
-            f"{product_id:<6}"
-            f"{name:<30}"
-            f"{quantity:<12}"
-            f"{price:<12.2f}"
+            f"{product_id:<6}{name:<24}{quantity:<12}"
+            f"{cost_price:<16.2f}{selling_price:<16.2f}"
         )
 
-    print("-" * 60)
-    print(f"Total inventory value: {total_value:,.2f}")
-
-    input("\nPress Enter to continue...")
+    print("-" * 74)
+    print(f"{t('total_inventory_value')}: {total_value:,.2f}")
+    _pause()
 
 
 def financial_summary():
+    """Summarize operating totals and derive profit from posted ledger entries."""
     print()
-    print("========== FINANCIAL SUMMARY ==========")
+    print(f"========== {t('financial_summary').upper()} ==========")
 
-    cursor.execute("""
-        SELECT COALESCE(SUM(total), 0)
-        FROM sales
-    """)
+    cursor.execute("SELECT COALESCE(SUM(total), 0) FROM sales")
+    sales = float(cursor.fetchone()[0] or 0)
+    cursor.execute("SELECT COALESCE(SUM(total), 0) FROM purchases")
+    purchases = float(cursor.fetchone()[0] or 0)
 
-    sales = cursor.fetchone()[0]
-
-    cursor.execute("""
-        SELECT COALESCE(SUM(total), 0)
-        FROM purchases
-    """)
-
-    purchases = cursor.fetchone()[0]
-
-    cursor.execute("""
-        SELECT COALESCE(SUM(amount), 0)
+    cursor.execute(
+        """
+        SELECT payment_type, COALESCE(SUM(amount), 0)
         FROM payments
-    """)
+        GROUP BY payment_type
+        """
+    )
+    payment_totals = {row[0]: float(row[1] or 0) for row in cursor.fetchall()}
+    customer_payments = payment_totals.get("customer", 0.0)
+    supplier_payments = payment_totals.get("supplier", 0.0)
 
-    payments = cursor.fetchone()[0]
+    cursor.execute(
+        """
+        SELECT
+            COALESCE(SUM(CASE
+                WHEN accounts.account_type = 'Revenue'
+                THEN journal_lines.credit - journal_lines.debit
+                ELSE 0
+            END), 0),
+            COALESCE(SUM(CASE
+                WHEN accounts.account_type = 'Expense'
+                THEN journal_lines.debit - journal_lines.credit
+                ELSE 0
+            END), 0)
+        FROM accounts
+        LEFT JOIN journal_lines ON journal_lines.account_id = accounts.id
+        WHERE accounts.is_active = 1
+          AND accounts.account_type IN ('Revenue', 'Expense')
+        """
+    )
+    revenue, expenses = (float(value or 0) for value in cursor.fetchone())
+    net_profit = revenue - expenses
 
-    balance = sales - purchases
-
-    print()
-    print(f"Total sales:       {sales:,.2f}")
-    print(f"Total purchases:   {purchases:,.2f}")
-    print(f"Total payments:    {payments:,.2f}")
+    print(f"{t('sales_amount')}: {sales:,.2f}")
+    print(f"{t('purchases_amount')}: {purchases:,.2f}")
+    print(f"{t('customer_payments')}: {customer_payments:,.2f}")
+    print(f"{t('supplier_payments')}: {supplier_payments:,.2f}")
     print("-" * 40)
-    print(f"Net balance:       {balance:,.2f}")
-
-    input("\nPress Enter to continue...")
+    print(f"{t('total_revenue')}: {revenue:,.2f}")
+    print(f"{t('total_expenses')}: {expenses:,.2f}")
+    if net_profit >= 0:
+        print(f"{t('net_profit')}: {net_profit:,.2f}")
+    else:
+        print(f"{t('net_loss')}: {abs(net_profit):,.2f}")
+    _pause()

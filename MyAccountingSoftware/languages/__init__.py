@@ -6,33 +6,28 @@ from languages.rw import TRANSLATIONS as KINYARWANDA
 LANGUAGES = {
     "1": "en",
     "2": "fr",
-    "3": "rw"
+    "3": "rw",
 }
-
 
 LANGUAGE_NAMES = {
     "en": "English",
     "fr": "Français",
-    "rw": "Kinyarwanda"
+    "rw": "Kinyarwanda",
 }
-
 
 TRANSLATION_TABLES = {
     "en": ENGLISH,
     "fr": FRENCH,
-    "rw": KINYARWANDA
+    "rw": KINYARWANDA,
 }
-
 
 _current_language = "en"
 
 
 def set_language(language_code):
     global _current_language
-
     if language_code not in TRANSLATION_TABLES:
         return False
-
     _current_language = language_code
     return True
 
@@ -42,53 +37,33 @@ def get_language():
 
 
 def get_language_name():
-    return LANGUAGE_NAMES.get(
-        _current_language,
-        "English"
-    )
+    return LANGUAGE_NAMES.get(_current_language, "English")
 
 
 def t(key):
     current_translations = TRANSLATION_TABLES.get(
-        _current_language,
-        ENGLISH
+        _current_language, ENGLISH
     )
-
-    if key in current_translations:
-        return current_translations[key]
-
-    if key in ENGLISH:
-        return ENGLISH[key]
-
-    return key
+    return current_translations.get(key, ENGLISH.get(key, key))
 
 
 def choose_language():
-    print()
-    print("================================")
-    print(t("select_language"))
-    print("================================")
+    while True:
+        print()
+        print("================================")
+        print(t("select_language"))
+        print("================================")
+        print("1.", t("english"))
+        print("2.", t("french"))
+        print("3.", t("kinyarwanda"))
 
-    print("1.", t("english"))
-    print("2.", t("french"))
-    print("3.", t("kinyarwanda"))
+        choice = input(f"{t('choose_option')} ").strip()
+        language_code = LANGUAGES.get(choice)
+        if language_code is None:
+            print(t("invalid_option"))
+            continue
 
-    choice = input(
-        f"{t('choose_option')} "
-    ).strip()
-
-    language_code = LANGUAGES.get(choice)
-
-    if language_code is None:
-        print(t("invalid_option"))
-        return False
-
-    set_language(language_code)
-
-    print()
-    print(
-        f"{t('language_selected')}: "
-        f"{get_language_name()}"
-    )
-
-    return True
+        set_language(language_code)
+        print()
+        print(f"{t('language_selected')}: {get_language_name()}")
+        return True

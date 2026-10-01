@@ -1,5 +1,6 @@
 from database import cursor, connection
 from languages import t
+from modules.validation import parse_money
 
 
 def accounting_menu():
@@ -28,30 +29,30 @@ def accounting_menu():
 
         if choice == "1":
             chart_of_accounts()
-            input("\nPress Enter to continue...")
+            input("\n" + t("press_enter"))
 
         elif choice == "2":
             create_journal_entry()
 
         elif choice == "3":
             view_journal_entries()
-            input("\nPress Enter to continue...")
+            input("\n" + t("press_enter"))
 
         elif choice == "4":
             general_ledger()
-            input("\nPress Enter to continue...")
+            input("\n" + t("press_enter"))
 
         elif choice == "5":
             trial_balance()
-            input("\nPress Enter to continue...")
+            input("\n" + t("press_enter"))
 
         elif choice == "6":
             profit_loss()
-            input("\nPress Enter to continue...")
+            input("\n" + t("press_enter"))
 
         elif choice == "7":
             balance_sheet()
-            input("\nPress Enter to continue...")
+            input("\n" + t("press_enter"))
 
         elif choice == "8":
             return
@@ -59,7 +60,7 @@ def accounting_menu():
         else:
             print()
             print(t("invalid_option"))
-            input("\nPress Enter to continue...")
+            input("\n" + t("press_enter"))
 
 
 def chart_of_accounts():
@@ -92,7 +93,7 @@ def chart_of_accounts():
             f"{t('id')}: {account[0]} | "
             f"{t('code')}: {account[1]} | "
             f"{t('name')}: {account[2]} | "
-            f"Type: {account[3]}"
+            f"{t('account_type')}: {account[3]}"
         )
 
 
@@ -112,11 +113,11 @@ def create_journal_entry():
         return
 
     debit_id = input(
-        "Enter debit account ID: "
+        f"{t('debit')} {t('account')} ID: "
     ).strip()
 
     credit_id = input(
-        "Enter credit account ID: "
+        f"{t('credit')} {t('account')} ID: "
     ).strip()
 
     amount_text = input(
@@ -126,10 +127,7 @@ def create_journal_entry():
     try:
         debit_id = int(debit_id)
         credit_id = int(credit_id)
-        amount = float(amount_text)
-
-        if amount <= 0:
-            raise ValueError
+        amount = parse_money(amount_text, allow_zero=False)
 
     except ValueError:
         print(t("invalid_amount"))
@@ -236,7 +234,7 @@ def view_journal_entries():
         print(
             f"{t('id')}: {entry[0]} | "
             f"{t('date')}: {entry[1]} | "
-            f"Reference: {entry[2] or '-'} | "
+            f"{t('reference')}: {entry[2] or '-'} | "
             f"{t('description')}: {entry[3]}"
         )
 
@@ -254,6 +252,7 @@ def general_ledger():
             journal_entries.entry_date,
             accounts.account_code,
             accounts.account_name,
+            journal_lines.description,
             journal_lines.debit,
             journal_lines.credit
         FROM journal_lines
@@ -279,8 +278,9 @@ def general_ledger():
             f"{t('date')}: {row[1]} | "
             f"{t('code')}: {row[2]} | "
             f"{t('name')}: {row[3]} | "
-            f"Debit: {row[4]:.2f} | "
-            f"Credit: {row[5]:.2f}"
+            f"{t('description')}: {row[4] or '-'} | "
+            f"{t('debit')}: {row[5]:.2f} | "
+            f"{t('credit')}: {row[6]:.2f}"
         )
 
 
@@ -313,9 +313,6 @@ def trial_balance():
         rows = cursor.fetchall()
 
         print()
-        print("DEBUG: Trial Balance query executed successfully.")
-        print("DEBUG: Number of accounts found:", len(rows))
-        print()
 
         if not rows:
             print(t("not_found"))
@@ -324,7 +321,7 @@ def trial_balance():
         total_debit = 0.0
         total_credit = 0.0
 
-        print("ACCOUNT CODE | ACCOUNT NAME | DEBIT | CREDIT")
+        print(f"{t('account_code')} | {t('account_name')} | {t('debit')} | {t('credit')}")
         print("-----------------------------------------------")
 
         for row in rows:
@@ -347,21 +344,21 @@ def trial_balance():
 
         print("-----------------------------------------------")
         print(
-            f"{'TOTAL':<40} "
+            f"{t('total').upper():<40} "
             f"{total_debit:>10.2f} | "
             f"{total_credit:>10.2f}"
         )
         print("-----------------------------------------------")
 
         if abs(total_debit - total_credit) < 0.01:
-            print("Trial Balance: BALANCED")
+            print(f"{t('trial_balance')}: {t('balanced')}")
         else:
-            print("Trial Balance: NOT BALANCED")
+            print(f"{t('trial_balance')}: {t('not_balanced')}")
 
     except Exception as e:
 
         print()
-        print("ERROR IN TRIAL BALANCE:")
+        print(f"{t('error')}: {t('trial_balance')}")
         print(e)
 
 
@@ -418,10 +415,10 @@ def profit_loss():
 
             if amount != 0:
                 print(
-                    f"Revenue | "
-                    f"Code: {code} | "
-                    f"Name: {name} | "
-                    f"Amount: {amount:.2f}"
+                    f"{t('revenue')} | "
+                    f"{t('code')}: {code} | "
+                    f"{t('name')}: {name} | "
+                    f"{t('amount')}: {amount:.2f}"
                 )
 
         elif account_type == "Expense":
@@ -431,23 +428,23 @@ def profit_loss():
 
             if amount != 0:
                 print(
-                    f"Expense | "
-                    f"Code: {code} | "
-                    f"Name: {name} | "
-                    f"Amount: {amount:.2f}"
+                    f"{t('expense')} | "
+                    f"{t('code')}: {code} | "
+                    f"{t('name')}: {name} | "
+                    f"{t('amount')}: {amount:.2f}"
                 )
 
     net_profit = total_revenue - total_expenses
 
     print("--------------------------------")
-    print(f"TOTAL REVENUE:  {total_revenue:.2f}")
-    print(f"TOTAL EXPENSES: {total_expenses:.2f}")
+    print(f"{t('total_revenue')}: {total_revenue:.2f}")
+    print(f"{t('total_expenses')}: {total_expenses:.2f}")
     print("--------------------------------")
 
     if net_profit >= 0:
-        print(f"NET PROFIT:     {net_profit:.2f}")
+        print(f"{t('net_profit')}: {net_profit:.2f}")
     else:
-        print(f"NET LOSS:       {abs(net_profit):.2f}")
+        print(f"{t('net_loss')}: {abs(net_profit):.2f}")
 
     print("--------------------------------")
 
@@ -521,9 +518,9 @@ def balance_sheet():
 
         print(
             f"Code: {code} | "
-            f"Name: {name} | "
-            f"Type: {account_type} | "
-            f"Amount: {amount:.2f}"
+            f"{t('name')}: {name} | "
+            f"{t('account_type')}: {account_type} | "
+            f"{t('amount')}: {amount:.2f}"
         )
 
     # Calculate current profit/loss
@@ -562,10 +559,10 @@ def balance_sheet():
     net_profit = total_revenue - total_expenses
 
     print("--------------------------------")
-    print(f"Assets:              {total_assets:.2f}")
-    print(f"Liabilities:         {total_liabilities:.2f}")
-    print(f"Equity:              {total_equity:.2f}")
-    print(f"Current Net Profit:  {net_profit:.2f}")
+    print(f"{t('assets')}: {total_assets:.2f}")
+    print(f"{t('liabilities')}: {total_liabilities:.2f}")
+    print(f"{t('equity')}: {total_equity:.2f}")
+    print(f"{t('current_net_profit')}: {net_profit:.2f}")
     print("--------------------------------")
 
     total_equity_with_profit = total_equity + net_profit
@@ -582,6 +579,6 @@ def balance_sheet():
     print("--------------------------------")
 
     if abs(total_assets - liabilities_equity) < 0.01:
-        print("Balance Sheet: BALANCED")
+        print(f"{t('balance_sheet')}: {t('balanced')}")
     else:
-        print("Balance Sheet: NOT BALANCED")
+        print(f"{t('balance_sheet')}: {t('not_balanced')}")

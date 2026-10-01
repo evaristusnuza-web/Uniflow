@@ -55,7 +55,8 @@ def initialize_database():
             code TEXT NOT NULL UNIQUE,
             name TEXT NOT NULL,
             price REAL NOT NULL DEFAULT 0,
-            quantity INTEGER NOT NULL DEFAULT 0
+            quantity INTEGER NOT NULL DEFAULT 0,
+            cost_price REAL NOT NULL DEFAULT 0
         )
     """)
 
@@ -88,6 +89,7 @@ def initialize_database():
             quantity INTEGER NOT NULL,
             price REAL NOT NULL,
             subtotal REAL NOT NULL,
+            cost_price REAL NOT NULL DEFAULT 0,
 
             FOREIGN KEY (sale_id)
                 REFERENCES sales(id),
@@ -107,6 +109,7 @@ def initialize_database():
             supplier_id INTEGER,
             purchase_date TEXT NOT NULL,
             total REAL NOT NULL,
+            payment_method TEXT,
 
             FOREIGN KEY (supplier_id)
                 REFERENCES suppliers(id)
@@ -227,6 +230,25 @@ def initialize_database():
     """)
 
     # --------------------------------------------------------
+    # INVENTORY ADJUSTMENTS
+    # --------------------------------------------------------
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS inventory_adjustments (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            product_id INTEGER NOT NULL,
+            product_code TEXT,
+            product_name TEXT,
+            old_quantity INTEGER NOT NULL,
+            new_quantity INTEGER NOT NULL,
+            difference INTEGER NOT NULL,
+            cost_price REAL NOT NULL DEFAULT 0,
+            value_difference REAL NOT NULL DEFAULT 0,
+            adjustment_date TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+
+    # --------------------------------------------------------
     # DEFAULT ACCOUNTS
     # --------------------------------------------------------
 
@@ -277,36 +299,114 @@ def initialize_database():
 # ============================================================
 
 def migrate_database():
-
-    # --------------------------------------------------------
-    # CHECK SALES TABLE
-    # --------------------------------------------------------
-
-    cursor.execute("""
-        PRAGMA table_info(sales)
-    """)
-
-    columns = cursor.fetchall()
-
-    column_names = [
-        column[1]
-        for column in columns
+    """Add columns introduced after the original SQLite schema."""
+    migrations = [
+        ("sales", "payment_method", "TEXT", None),
+        ("purchases", "payment_method", "TEXT", None),
+        ("products", "cost_price", "REAL NOT NULL DEFAULT 0", None),
+        (
+            "sale_items",
+            "cost_price",
+            "REAL NOT NULL DEFAULT 0",
+            """
+            UPDATE sale_items
+            SET cost_price = COALESCE(
+                (
+                    SELECT products.cost_price
+                    FROM products
+                    WHERE products.id = sale_items.product_id
+                ),
+                0
+            )
+            """,
+        ),
     ]
 
-    # --------------------------------------------------------
-    # ADD PAYMENT METHOD IF MISSING
-    # --------------------------------------------------------
+    changed = False
+    for table_name, column_name, column_definition, backfill_sql in migrations:
+        cursor.execute(f"PRAGMA table_info({table_name})")
+        columns = {column[1] for column in cursor.fetchall()}
+        if column_name in columns:
+            continue
 
-    if "payment_method" not in column_names:
+        cursor.execute(
+            f"ALTER TABLE {table_name} "
+            f"ADD COLUMN {column_name} {column_definition}"
+        )
+        if backfill_sql:
+            cursor.execute(backfill_sql)
+        changed = True
 
-        cursor.execute("""
-            ALTER TABLE sales
-            ADD COLUMN payment_method TEXT
-        """)
+    # Older versions recorded payment methods only in journal account lines.
+    # Recover them where possible, while preserving any value already saved.
+    cursor.execute(
+        """
+        UPDATE sales
+        SET payment_method = (
+            SELECT CASE accounts.account_code
+                WHEN '1010' THEN 'Cash'
+                WHEN '1020' THEN 'Bank'
+                WHEN '1030' THEN 'Mobile Money'
+                WHEN '1100' THEN 'Accounts Receivable'
+            END
+            FROM journal_entries
+            JOIN journal_lines
+                ON journal_lines.journal_entry_id = journal_entries.id
+            JOIN accounts ON accounts.id = journal_lines.account_id
+            WHERE journal_entries.reference = 'SALE-' || sales.id
+              AND journal_lines.debit > 0
+            ORDER BY journal_lines.id
+            LIMIT 1
+        )
+        WHERE payment_method IS NULL
+          AND EXISTS (
+            SELECT 1
+            FROM journal_entries
+            JOIN journal_lines
+                ON journal_lines.journal_entry_id = journal_entries.id
+            JOIN accounts ON accounts.id = journal_lines.account_id
+            WHERE journal_entries.reference = 'SALE-' || sales.id
+              AND journal_lines.debit > 0
+          )
+        """
+    )
+    changed = changed or cursor.rowcount > 0
 
+    cursor.execute(
+        """
+        UPDATE purchases
+        SET payment_method = (
+            SELECT CASE accounts.account_code
+                WHEN '1010' THEN 'Cash'
+                WHEN '1020' THEN 'Bank'
+                WHEN '1030' THEN 'Mobile Money'
+                WHEN '2010' THEN 'Accounts Payable'
+            END
+            FROM journal_entries
+            JOIN journal_lines
+                ON journal_lines.journal_entry_id = journal_entries.id
+            JOIN accounts ON accounts.id = journal_lines.account_id
+            WHERE journal_entries.reference = 'PURCHASE-' || purchases.id
+              AND journal_lines.credit > 0
+            ORDER BY journal_lines.id
+            LIMIT 1
+        )
+        WHERE payment_method IS NULL
+          AND EXISTS (
+            SELECT 1
+            FROM journal_entries
+            JOIN journal_lines
+                ON journal_lines.journal_entry_id = journal_entries.id
+            JOIN accounts ON accounts.id = journal_lines.account_id
+            WHERE journal_entries.reference = 'PURCHASE-' || purchases.id
+              AND journal_lines.credit > 0
+          )
+        """
+    )
+    changed = changed or cursor.rowcount > 0
+
+    if changed:
         connection.commit()
-
-        print("Database updated successfully.")
 
 
 # ============================================================

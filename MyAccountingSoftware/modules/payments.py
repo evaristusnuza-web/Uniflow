@@ -8,6 +8,7 @@ from modules.accounting_engine import (
 )
 
 from languages import t
+from modules.validation import parse_money
 
 
 def payment_menu():
@@ -48,7 +49,7 @@ def payment_menu():
             if not customers:
 
                 print(t("not_found"))
-                print("Please add a customer first.")
+                print(t("please_add_customer"))
 
                 continue
 
@@ -89,10 +90,9 @@ def payment_menu():
 
             try:
 
-                amount = float(
-                    input(
-                        t("enter_amount") + " "
-                    )
+                amount = parse_money(
+                    input(t("enter_amount") + " "),
+                    allow_zero=False
                 )
 
             except ValueError:
@@ -109,9 +109,9 @@ def payment_menu():
 
             print()
             print(t("method") + ":")
-            print("1. Cash")
-            print("2. Bank")
-            print("3. Mobile Money")
+            print(f"1. {t('cash')}")
+            print(f"2. {t('bank')}")
+            print(f"3. {t('mobile_money')}")
 
             method_choice = input(
                 t("choose_option") + " "
@@ -162,7 +162,7 @@ def payment_menu():
             )
 
             confirm = input(
-                "Record this payment? (yes/no): "
+                t("record_payment") + " "
             ).strip().lower()
 
             if confirm not in (
@@ -229,7 +229,7 @@ def payment_menu():
                     f"{t('amount')}: {amount:.2f}"
                 )
 
-                print("Accounting entry created.")
+                print(t("accounting_entry_created"))
 
             except Exception as error:
 
@@ -264,7 +264,7 @@ def payment_menu():
             if not suppliers:
 
                 print(t("not_found"))
-                print("Please add a supplier first.")
+                print(t("please_add_supplier"))
 
                 continue
 
@@ -305,10 +305,9 @@ def payment_menu():
 
             try:
 
-                amount = float(
-                    input(
-                        t("enter_amount") + " "
-                    )
+                amount = parse_money(
+                    input(t("enter_amount") + " "),
+                    allow_zero=False
                 )
 
             except ValueError:
@@ -325,9 +324,9 @@ def payment_menu():
 
             print()
             print(t("method") + ":")
-            print("1. Cash")
-            print("2. Bank")
-            print("3. Mobile Money")
+            print(f"1. {t('cash')}")
+            print(f"2. {t('bank')}")
+            print(f"3. {t('mobile_money')}")
 
             method_choice = input(
                 t("choose_option") + " "
@@ -378,7 +377,7 @@ def payment_menu():
             )
 
             confirm = input(
-                "Record this payment? (yes/no): "
+                t("record_payment") + " "
             ).strip().lower()
 
             if confirm not in (
@@ -445,7 +444,7 @@ def payment_menu():
                     f"{t('amount')}: {amount:.2f}"
                 )
 
-                print("Accounting entry created.")
+                print(t("accounting_entry_created"))
 
             except Exception as error:
 
@@ -510,7 +509,7 @@ def payment_menu():
 
                     print(
                         f"{t('id')}: {payment[0]} | "
-                        f"{t('method')}: {payment[1]} | "
+                        f"{t('type')}: {payment[1]} | "
                         f"{t('name')}: "
                         f"{payment[2] or 'Unknown'} | "
                         f"{t('amount')}: {payment[3]:.2f} | "
@@ -574,8 +573,7 @@ def payment_menu():
             )
 
             print(
-                f"{t('description')}:",
-                payment[1]
+                f"{t('type')}: {payment[1]}"
             )
 
             print(

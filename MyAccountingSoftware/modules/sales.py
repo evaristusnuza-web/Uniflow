@@ -48,15 +48,8 @@ def sales_menu():
 
             customers = cursor.fetchall()
 
-            if not customers:
-
-                print(t("not_found"))
-                print("Please add a customer first.")
-
-                continue
-
             # ------------------------------------------------
-            # SELECT CUSTOMER
+            # SELECT A CUSTOMER OR RECORD A WALK-IN SALE
             # ------------------------------------------------
 
             print()
@@ -65,34 +58,37 @@ def sales_menu():
                 + t("customers").upper()
                 + " =========="
             )
+            print(f"0. {t('walk_in_customer')}")
 
-            for customer in customers:
-
+            for available_customer in customers:
                 print(
-                    f"{t('id')}: {customer[0]} | "
-                    f"{t('name')}: {customer[1]}"
+                    f"{t('id')}: {available_customer[0]} | "
+                    f"{t('name')}: {available_customer[1]}"
                 )
 
-            customer_id = input(
+            customer_choice = input(
                 t("enter_id") + " "
             ).strip()
 
-            cursor.execute(
-                """
-                SELECT id, name
-                FROM customers
-                WHERE id = ?
-                """,
-                (customer_id,)
-            )
+            if customer_choice == "0":
+                customer_id = None
+                customer = (None, t("walk_in_customer"))
+            else:
+                cursor.execute(
+                    """
+                    SELECT id, name
+                    FROM customers
+                    WHERE id = ?
+                    """,
+                    (customer_choice,)
+                )
+                customer = cursor.fetchone()
 
-            customer = cursor.fetchone()
+                if customer is None:
+                    print(t("customer_not_found"))
+                    continue
 
-            if customer is None:
-
-                print(t("customer_not_found"))
-
-                continue
+                customer_id = customer[0]
 
             # ------------------------------------------------
             # PAYMENT METHOD
@@ -100,10 +96,10 @@ def sales_menu():
 
             print()
             print(t("method") + ":")
-            print("1. Cash")
-            print("2. Bank")
-            print("3. Mobile Money")
-            print("4. Credit")
+            print(f"1. {t('cash')}")
+            print(f"2. {t('bank')}")
+            print(f"3. {t('mobile_money')}")
+            print(f"4. {t('credit_sale')}")
 
             payment_choice = input(
                 t("choose_option") + " "
@@ -131,6 +127,7 @@ def sales_menu():
             # ------------------------------------------------
 
             sale_items = []
+            selected_quantities = {}
 
             while True:
 
@@ -153,7 +150,7 @@ def sales_menu():
                 if not products:
 
                     print(t("not_found"))
-                    print("Please add a product first.")
+                    print(t("please_add_product"))
 
                     break
 
@@ -264,11 +261,17 @@ def sales_menu():
 
                     continue
 
-                if quantity > product[4]:
-
-                    print("Not enough stock.")
-
+                already_selected = selected_quantities.get(
+                    product[0], 0
+                )
+                available_quantity = product[4] - already_selected
+                if quantity > available_quantity:
+                    print(t("not_enough_stock"))
                     continue
+
+                selected_quantities[product[0]] = (
+                    already_selected + quantity
+                )
 
                 # ------------------------------------------------
                 # SELLING PRICE IS USED HERE
@@ -283,7 +286,8 @@ def sales_menu():
                         product[0],
                         quantity,
                         selling_price,
-                        subtotal
+                        subtotal,
+                        buying_price
                     )
                 )
 
@@ -345,20 +349,7 @@ def sales_menu():
                 selling_price = item[2]
                 subtotal = item[3]
 
-                cursor.execute(
-                    """
-                    SELECT cost_price
-                    FROM products
-                    WHERE id = ?
-                    """,
-                    (product_id,)
-                )
-
-                cost_row = cursor.fetchone()
-
-                buying_price = float(
-                    cost_row[0] or 0
-                )
+                buying_price = item[4]
 
                 item_cost = (
                     buying_price * quantity
@@ -400,12 +391,7 @@ def sales_menu():
             print("==============================")
 
             confirm = input(
-                t("delete_confirmation")
-                .replace(
-                    "Delete this item?",
-                    "Confirm sale?"
-                )
-                + " "
+                t("confirm_sale") + " "
             ).strip().lower()
 
             if confirm not in (
@@ -437,14 +423,16 @@ def sales_menu():
                     (
                         customer_id,
                         sale_date,
-                        total
+                        total,
+                        payment_method
                     )
-                    VALUES (?, ?, ?)
+                    VALUES (?, ?, ?, ?)
                     """,
                     (
                         customer_id,
                         sale_date,
-                        total
+                        total,
+                        payment_method
                     )
                 )
 
@@ -469,16 +457,18 @@ def sales_menu():
                             product_id,
                             quantity,
                             price,
-                            subtotal
+                            subtotal,
+                            cost_price
                         )
-                        VALUES (?, ?, ?, ?, ?)
+                        VALUES (?, ?, ?, ?, ?, ?)
                         """,
                         (
                             sale_id,
                             product_id,
                             quantity,
                             selling_price,
-                            subtotal
+                            subtotal,
+                            item[4]
                         )
                     )
 
@@ -572,7 +562,8 @@ def sales_menu():
                     sales.id,
                     customers.name,
                     sales.sale_date,
-                    sales.total
+                    sales.total,
+                    sales.payment_method
                 FROM sales
                 LEFT JOIN customers
                     ON sales.customer_id =
@@ -601,9 +592,10 @@ def sales_menu():
                     print(
                         f"{t('id')}: {sale[0]} | "
                         f"{t('customers')}: "
-                        f"{sale[1] or 'Walk-in'} | "
+                        f"{sale[1] or t('walk_in_customer')} | "
                         f"{t('date')}: {sale[2]} | "
-                        f"{t('total')}: {sale[3]:.2f}"
+                        f"{t('total')}: {sale[3]:.2f} | "
+                        f"{t('method')}: {sale[4] or '-'}"
                     )
 
         # ====================================================
@@ -622,7 +614,8 @@ def sales_menu():
                     sales.id,
                     customers.name,
                     sales.sale_date,
-                    sales.total
+                    sales.total,
+                    sales.payment_method
                 FROM sales
                 LEFT JOIN customers
                     ON sales.customer_id =
@@ -636,7 +629,7 @@ def sales_menu():
 
             if sale is None:
 
-                print("Sale not found.")
+                print(t("sale_not_found"))
 
                 continue
 
@@ -654,7 +647,7 @@ def sales_menu():
 
             print(
                 f"{t('customers')}:",
-                sale[1] or "Walk-in"
+                sale[1] or t("walk_in_customer")
             )
 
             print(
@@ -665,6 +658,9 @@ def sales_menu():
             print(
                 f"{t('total')}: {sale[3]:.2f}"
             )
+            print(
+                f"{t('method')}: {sale[4] or '-'}"
+            )
 
             cursor.execute(
                 """
@@ -674,7 +670,7 @@ def sales_menu():
                     sale_items.quantity,
                     sale_items.price,
                     sale_items.subtotal,
-                    products.cost_price
+                    sale_items.cost_price
                 FROM sale_items
                 JOIN products
                     ON sale_items.product_id =

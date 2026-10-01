@@ -7,6 +7,7 @@ from modules.accounting_engine import (
 )
 
 from languages import t
+from modules.validation import parse_money
 
 
 def purchase_menu():
@@ -124,10 +125,10 @@ def purchase_menu():
 
             print()
             print(t("method") + ":")
-            print("1. Cash")
-            print("2. Bank")
-            print("3. Mobile Money")
-            print("4. Credit")
+            print(f"1. {t('cash')}")
+            print(f"2. {t('bank')}")
+            print(f"3. {t('mobile_money')}")
+            print(f"4. {t('accounts_payable')}")
 
             payment_choice = input(
                 t("choose_option") + " "
@@ -238,10 +239,8 @@ def purchase_menu():
                         )
                     )
 
-                    purchase_price = float(
-                        input(
-                            t("enter_price") + " "
-                        )
+                    purchase_price = parse_money(
+                        input(t("enter_price") + " ")
                     )
 
                 except ValueError:
@@ -345,7 +344,7 @@ def purchase_menu():
             print("==============================")
 
             confirm = input(
-                "Confirm purchase? (yes/no): "
+                t("confirm_purchase") + " "
             ).strip().lower()
 
             if confirm not in (
@@ -377,14 +376,16 @@ def purchase_menu():
                     (
                         supplier_id,
                         purchase_date,
-                        total
+                        total,
+                        payment_method
                     )
-                    VALUES (?, ?, ?)
+                    VALUES (?, ?, ?, ?)
                     """,
                     (
                         supplier_id,
                         purchase_date,
-                        total
+                        total,
+                        payment_method
                     )
                 )
 
@@ -422,20 +423,36 @@ def purchase_menu():
                         )
                     )
 
-                    # -----------------------------------------
-                    # INCREASE INVENTORY
-                    # -----------------------------------------
+                    # Update stock and moving-average unit cost.
+                    cursor.execute(
+                        """
+                        SELECT quantity, cost_price
+                        FROM products
+                        WHERE id = ?
+                        """,
+                        (product_id,)
+                    )
+                    current_product = cursor.fetchone()
+                    if current_product is None:
+                        raise ValueError(
+                            f"Product ID {product_id} not found."
+                        )
+
+                    current_quantity = int(current_product[0] or 0)
+                    current_cost = parse_money(current_product[1] or 0)
+                    new_quantity = current_quantity + quantity
+                    weighted_cost = (
+                        current_quantity * current_cost
+                        + quantity * price
+                    ) / new_quantity
 
                     cursor.execute(
                         """
                         UPDATE products
-                        SET quantity = quantity + ?
+                        SET quantity = ?, cost_price = ?
                         WHERE id = ?
                         """,
-                        (
-                            quantity,
-                            product_id
-                        )
+                        (new_quantity, weighted_cost, product_id)
                     )
 
                 # ---------------------------------------------
@@ -500,7 +517,8 @@ def purchase_menu():
                     purchases.id,
                     suppliers.name,
                     purchases.purchase_date,
-                    purchases.total
+                    purchases.total,
+                    purchases.payment_method
                 FROM purchases
                 LEFT JOIN suppliers
                     ON purchases.supplier_id =
@@ -531,7 +549,8 @@ def purchase_menu():
                         f"{t('suppliers')}: "
                         f"{purchase[1] or 'Unknown'} | "
                         f"{t('date')}: {purchase[2]} | "
-                        f"{t('total')}: {purchase[3]:.2f}"
+                        f"{t('total')}: {purchase[3]:.2f} | "
+                        f"{t('method')}: {purchase[4] or '-'}"
                     )
 
         # ====================================================
@@ -550,7 +569,8 @@ def purchase_menu():
                     purchases.id,
                     suppliers.name,
                     purchases.purchase_date,
-                    purchases.total
+                    purchases.total,
+                    purchases.payment_method
                 FROM purchases
                 LEFT JOIN suppliers
                     ON purchases.supplier_id =
@@ -564,7 +584,7 @@ def purchase_menu():
 
             if purchase is None:
 
-                print("Purchase not found.")
+                print(t("purchase_not_found"))
 
                 continue
 
@@ -592,6 +612,9 @@ def purchase_menu():
 
             print(
                 f"{t('total')}: {purchase[3]:.2f}"
+            )
+            print(
+                f"{t('method')}: {purchase[4] or '-'}"
             )
 
             cursor.execute(

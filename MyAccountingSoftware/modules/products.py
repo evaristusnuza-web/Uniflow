@@ -1,21 +1,11 @@
 from database import cursor, connection
 from languages import t
-
-
-# ============================================================
-# ADD COST PRICE COLUMN IF IT DOES NOT EXIST
-# ============================================================
-
-try:
-    cursor.execute(
-        """
-        ALTER TABLE products
-        ADD COLUMN cost_price REAL DEFAULT 0
-        """
-    )
-    connection.commit()
-except Exception:
-    pass
+from modules.accounting_engine import (
+    record_inventory_adjustment,
+    record_inventory_value_adjustment,
+    record_opening_inventory,
+)
+from modules.validation import parse_money
 
 
 # ============================================================
@@ -77,7 +67,7 @@ def stock_inventory():
                 product_id = product[0]
                 code = product[1]
                 name = product[2]
-                cost_price = float(product[3] or 0)
+                cost_price = parse_money(product[3] or 0)
                 system_quantity = int(product[4] or 0)
 
                 print("--------------------------------")
@@ -203,23 +193,6 @@ def stock_inventory():
 
                 continue
 
-            cursor.execute(
-                """
-                CREATE TABLE IF NOT EXISTS inventory_adjustments (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    product_id INTEGER NOT NULL,
-                    product_code TEXT,
-                    product_name TEXT,
-                    old_quantity INTEGER NOT NULL,
-                    new_quantity INTEGER NOT NULL,
-                    difference INTEGER NOT NULL,
-                    cost_price REAL DEFAULT 0,
-                    value_difference REAL DEFAULT 0,
-                    adjustment_date DATETIME DEFAULT CURRENT_TIMESTAMP
-                )
-                """
-            )
-
             for item in adjustments:
 
                 (
@@ -276,6 +249,12 @@ def stock_inventory():
                         cost_price,
                         value_difference
                     )
+                )
+
+                record_inventory_adjustment(
+                    cursor.lastrowid,
+                    difference,
+                    abs(value_difference)
                 )
 
             connection.commit()
@@ -351,10 +330,8 @@ def product_menu():
 
             try:
 
-                buying_price = float(
-                    input(
-                        t("enter_buying_price") + " "
-                    )
+                buying_price = parse_money(
+                    input(t("enter_buying_price") + " ")
                 )
 
             except ValueError:
@@ -369,10 +346,8 @@ def product_menu():
 
             try:
 
-                selling_price = float(
-                    input(
-                        t("enter_selling_price") + " "
-                    )
+                selling_price = parse_money(
+                    input(t("enter_selling_price") + " ")
                 )
 
             except ValueError:
@@ -426,6 +401,12 @@ def product_menu():
                     )
                 )
 
+                product_id = cursor.lastrowid
+                record_opening_inventory(
+                    product_id,
+                    quantity,
+                    buying_price
+                )
                 connection.commit()
 
                 print()
@@ -712,9 +693,7 @@ def product_menu():
 
                 try:
 
-                    new_buying_price = float(
-                        new_buying_price
-                    )
+                    new_buying_price = parse_money(new_buying_price)
 
                 except ValueError:
 
@@ -734,9 +713,7 @@ def product_menu():
 
                 try:
 
-                    new_selling_price = float(
-                        new_selling_price
-                    )
+                    new_selling_price = parse_money(new_selling_price)
 
                 except ValueError:
 
@@ -790,6 +767,14 @@ def product_menu():
 
                 continue
 
+            old_quantity = int(product[5] or 0)
+            old_buying_price = float(product[3] or 0)
+            quantity_difference = new_quantity - old_quantity
+            inventory_value_difference = (
+                new_quantity * new_buying_price
+                - old_quantity * old_buying_price
+            )
+
             try:
 
                 cursor.execute(
@@ -812,6 +797,41 @@ def product_menu():
                         product_id
                     )
                 )
+
+                if quantity_difference != 0 or inventory_value_difference != 0:
+                    cursor.execute(
+                        """
+                        INSERT INTO inventory_adjustments
+                        (
+                            product_id,
+                            product_code,
+                            product_name,
+                            old_quantity,
+                            new_quantity,
+                            difference,
+                            cost_price,
+                            value_difference
+                        )
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                        """,
+                        (
+                            product_id,
+                            new_code,
+                            new_name,
+                            old_quantity,
+                            new_quantity,
+                            quantity_difference,
+                            new_buying_price,
+                            inventory_value_difference
+                        )
+                    )
+                    record_inventory_value_adjustment(
+                        cursor.lastrowid,
+                        inventory_value_difference,
+                        description=(
+                            f"Manual product stock/value update #{product_id}"
+                        )
+                    )
 
                 connection.commit()
 

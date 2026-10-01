@@ -1,4 +1,4 @@
-from languages import choose_language, t, get_language_name
+from languages import choose_language, t
 
 from modules.customers import customer_menu
 from modules.suppliers import supplier_menu
